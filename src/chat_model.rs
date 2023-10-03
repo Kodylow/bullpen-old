@@ -27,15 +27,16 @@ impl ChatModel {
         max_output_tokens: i32,
         temperature: f32,
     ) -> Result<ChatModelResponse, ApiError> {
-        let client = reqwest::Client::new();
         let payload = self.build_request_payload(&prompts, max_output_tokens, temperature);
 
-        let req = client
+        let req = self
+            .base
+            .client // Use the client from base
             .post(&format!("{}/v1beta/chat", &self.base.server_url))
             .json(&payload)
             .build()?;
 
-        let mut res = client.execute(req).await?;
+        let mut res = self.base.client.execute(req).await?; // Use the client from base
 
         self.base.check_response(&mut res)?;
 
@@ -74,7 +75,6 @@ impl ChatModel {
         payload
     }
 
-    // Asynchronous streaming method using reqwest
     pub async fn stream_chat(
         &self,
         prompts: Vec<ChatSession>,
@@ -84,15 +84,16 @@ impl ChatModel {
         impl futures_util::stream::Stream<Item = Result<ChatModelResponse, ApiError>>,
         ApiError,
     > {
-        let client = Client::new();
         let payload = self.build_request_payload(&prompts, max_output_tokens, temperature);
 
-        let req = client
+        let req = self
+            .base
+            .client // Use the client from base
             .post(&format!("{}/v1beta/chat", &self.base.server_url))
             .json(&payload)
             .build()?;
 
-        let res = client.execute(req).await?;
+        let res = self.base.client.execute(req).await?; // Use the client from base
 
         self.base.check_response(&res)?;
 

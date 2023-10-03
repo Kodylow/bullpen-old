@@ -9,6 +9,7 @@ use futures_util::stream;
 use futures_util::StreamExt;
 use reqwest::header::HeaderMap;
 use reqwest::Body;
+use reqwest::Client;
 use reqwest::Response;
 use reqwest::StatusCode;
 use serde_json::{from_str, Value};
@@ -19,11 +20,13 @@ use tokio_stream::Stream;
 pub struct Model {
     pub server_url: String,
     pub auth: Box<dyn TokenManager>,
+    pub client: Client,
 }
 
 impl Model {
     pub fn new(server_url: Option<&str>) -> Result<Self, ApiError> {
         let config = crate::config::get_config();
+        let client = Client::new();
         if env::var("REPLIT_DEPLOYMENT").is_ok()
             || env::var("REPL_IDENTITY_KEY").is_ok()
             || env::var("REPL_IDENTITY").is_ok()
@@ -32,12 +35,14 @@ impl Model {
             Ok(Self {
                 server_url: server_url.map_or_else(|| config.root_url.clone(), ToString::to_string),
                 auth: Box::new(ReplitIdentityTokenManager),
+                client,
             })
         } else {
             Ok(Self {
                 server_url: server_url
                     .map_or_else(|| config.matador_url.clone(), ToString::to_string),
                 auth: Box::new(L402TokenManager),
+                client,
             })
         }
     }
