@@ -30,7 +30,7 @@ impl CompletionModel {
             .json(&payload)
             .build()?;
 
-        let mut res = self.base.client.execute(req).await?;
+        let res = self.base.client.execute(req).await?;
 
         self.base.check_response(&res)?;
 

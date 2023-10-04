@@ -1,5 +1,5 @@
 use crate::{error::ApiError, model::Model, structs::EmbeddingModelResponse};
-use reqwest::header::HeaderMap;
+
 use serde_json::Value;
 use std::collections::HashMap;
 

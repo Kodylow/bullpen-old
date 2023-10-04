@@ -1,5 +1,5 @@
 use futures_util::StreamExt;
-use reqwest_streams::*;
+
 use serde_json::Value;
 use std::collections::HashMap;
 

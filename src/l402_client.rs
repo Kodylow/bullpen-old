@@ -1,8 +1,7 @@
 use std::io::Error;
 
 use bytes::Bytes;
-use futures_util::StreamExt;
-use futures_util::{stream, Stream};
+use futures_util::Stream;
 use lightning_invoice::{Bolt11Invoice, SignedRawBolt11Invoice};
 use reqwest::{Client, Method, Request, RequestBuilder, Response, StatusCode};
 use serde::{Deserialize, Serialize};

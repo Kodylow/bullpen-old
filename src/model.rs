@@ -3,20 +3,18 @@ use crate::l402_client::L402Client;
 use crate::token_manager::L402TokenManager;
 use crate::token_manager::ReplitIdentityTokenManager;
 use crate::token_manager::TokenManager;
-use bytes::Buf;
-use bytes::BufMut;
+
 use bytes::Bytes;
-use bytes::BytesMut;
-use futures_util::stream;
+
 use futures_util::Stream;
-use futures_util::StreamExt;
+
 use reqwest::header::HeaderMap;
-use reqwest::Body;
+
 use reqwest::Client;
 use reqwest::Request;
 use reqwest::Response;
 use reqwest::StatusCode;
-use serde_json::{from_str, Value};
+
 use std::env;
 
 pub enum HttpClient {
