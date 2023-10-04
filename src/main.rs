@@ -35,20 +35,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     while let Some(chat_response) = chat_stream.next().await {
         println!("Model Response: {:?}", chat_response);
     }
-    
 
     // -- Embedding Model --
     let embedding_model = EmbeddingModel::new("textembedding-gecko", None)?;
 
-    let mut content = HashMap::<String, Value>::new();
-    content.insert("content".to_string(), "Hello world!".into());
+    let embeddings_content = vec![Value::String("Hello world!".to_string())];
 
-    let embeddings_content = vec![content];
-    
     let embeddings = embedding_model.embed(embeddings_content).await?;
 
     println!("Embeddings: {:?}", embeddings);
-    
 
     // -- Completion Model --
     let completion_model = CompletionModel::new("text-bison", None)?;

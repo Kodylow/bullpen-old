@@ -15,10 +15,7 @@ impl EmbeddingModel {
         Ok(EmbeddingModel { base, model_name })
     }
 
-    pub async fn embed(
-        &self,
-        content: Vec<HashMap<String, Value>>,
-    ) -> Result<EmbeddingModelResponse, ApiError> {
+    pub async fn embed(&self, content: Vec<Value>) -> Result<EmbeddingModelResponse, ApiError> {
         let payload = self.build_request_payload(&content, &HashMap::new());
 
         let req = self
@@ -43,16 +40,25 @@ impl EmbeddingModel {
 
     fn build_request_payload(
         &self,
-        content: &Vec<HashMap<String, Value>>,
+        content: &Vec<Value>,
         parameters: &HashMap<String, Value>,
     ) -> HashMap<String, Value> {
         let mut payload = HashMap::new();
         payload.insert("model".to_string(), self.model_name.clone().into());
 
+        let content: Vec<HashMap<String, Value>> = content
+            .into_iter()
+            .map(|text| {
+                let mut map = HashMap::new();
+                map.insert("content".to_string(), text.clone());
+                map
+            })
+            .collect();
+
         let mut params: HashMap<String, Value> = parameters.clone();
         params.insert(
             "content".to_string(),
-            serde_json::to_value(content.clone()).unwrap(),
+            serde_json::to_value(content).unwrap(),
         );
 
         payload.insert(
