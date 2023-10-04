@@ -60,7 +60,7 @@ impl ChatModel {
         let req = self
             .base
             .client // Use the client from base
-            .post(&format!("{}/v1beta/chat_streaming", &self.base.server_url)) // Notice the "_streaming" added to endpoint
+            .post(&format!("{}/v1beta/chat_streaming", &self.base.server_url))
             .json(&payload)
             .build()?;
 
