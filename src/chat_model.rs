@@ -65,7 +65,7 @@ impl ChatModel {
             .build()?;
 
         println!("Request: {:?}", req);
-        let res = self.base.client.execute_stream(req).await?; // Use the client from base
+        let res = self.base.client.execute_stream(req).await?; // Use the modified execute_stream method
 
         let stream = res.map(|res| {
             let res = res?;

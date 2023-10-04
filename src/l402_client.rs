@@ -1,7 +1,8 @@
 use std::io::Error;
 
 use bytes::Bytes;
-use futures_util::Stream;
+use futures_util::StreamExt;
+use futures_util::{stream, Stream};
 use lightning_invoice::{Bolt11Invoice, SignedRawBolt11Invoice};
 use reqwest::{Client, Method, Request, RequestBuilder, Response, StatusCode};
 use serde::{Deserialize, Serialize};
@@ -114,7 +115,24 @@ impl L402Client {
 
         let response = self.client.execute(request).await?;
 
-        Ok(response.bytes_stream())
+        // Print the Transfer-Encoding header
+        println!(
+            "Transfer-Encoding: {:?}",
+            response.headers().get("transfer-encoding")
+        );
+
+        let mut stream = response.bytes_stream();
+
+        while let Some(item) = stream.next().await {
+            let chunk = item?;
+            // Process chunk here...
+            println!("chunk {:?}", chunk);
+        }
+
+        panic!("Stream ended");
+
+        // return a dummy stream for now
+        Ok(stream::empty())
     }
 
     pub async fn pay_invoice(&self, invoice: Bolt11Invoice) -> Result<String, Error> {
