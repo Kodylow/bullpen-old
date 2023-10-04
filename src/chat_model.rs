@@ -63,19 +63,19 @@ impl ChatModel {
             .json(&payload)
             .build()?;
 
-        let res = self.base.client.execute(req).await?; // Use the client from base
+        println!("Request: {:?}", req);
+        let res = self.base.client.execute_stream(req).await?; // Use the client from base
 
-        self.base.check_response(&res)?;
+        let stream = res
+            .map(|res| {
+                let res = res?;
+                println!("Response: {:?}", res);
+                let chat_response: ChatModelResponse = serde_json::from_slice(&res)?;
+                Ok(chat_response)
+            })
+            .boxed();
 
-        let chunks_stream = res.bytes_stream().map(|result_chunk| match result_chunk {
-            Ok(chunk) => {
-                let chat_response: Result<ChatModelResponse, _> = serde_json::from_slice(&chunk);
-                chat_response.map_err(|e| ApiError::SerdeError(e))
-            }
-            Err(e) => Err(ApiError::ReqwestError(e)),
-        });
-
-        Ok(chunks_stream)
+        Ok(stream)
     }
 
     fn build_request_payload(

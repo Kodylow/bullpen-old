@@ -26,15 +26,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }],
     };
 
-    // let mut chat_stream = chat_model.stream_chat(vec![chat_session], 10, 0.5).await?;
+    let mut chat_stream = chat_model.stream_chat(vec![chat_session], 10, 0.5).await?;
 
-    // while let Some(chat_response) = chat_stream.next().await {
-    //     println!("Model Response: {:?}", chat_response);
-    // }
+    while let Some(chat_response) = chat_stream.next().await {
+        println!("Model Response: {:?}", chat_response);
+    }
 
-    let chat_response = chat_model.chat(vec![chat_session], 10, 0.5).await.unwrap();
+    // let chat_response = chat_model.chat(vec![chat_session], 10, 0.5).await.unwrap();
 
-    println!("Model Response: {:?}", chat_response);
+    // println!("Model Response: {:?}", chat_response);
 
     Ok(())
 }

@@ -1,5 +1,7 @@
 use std::io::Error;
 
+use bytes::Bytes;
+use futures_util::Stream;
 use lightning_invoice::{Bolt11Invoice, SignedRawBolt11Invoice};
 use reqwest::{Client, Method, Request, RequestBuilder, Response, StatusCode};
 use serde::{Deserialize, Serialize};
@@ -98,6 +100,14 @@ impl L402Client {
         let response = self.client.execute(request).await.unwrap();
 
         Ok(response)
+    }
+
+    pub async fn execute_stream(
+        &self,
+        request: Request,
+    ) -> Result<impl Stream<Item = Result<Bytes, reqwest::Error>>, reqwest::Error> {
+        let response = self.execute(request).await?;
+        Ok(response.bytes_stream())
     }
 
     pub async fn pay_invoice(&self, invoice: Bolt11Invoice) -> Result<String, Error> {
