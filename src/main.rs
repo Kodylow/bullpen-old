@@ -9,6 +9,11 @@ use std::error::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    env_logger::Builder::from_default_env()
+        .filter_level(log::LevelFilter::Trace)
+        .init();
+
+    log::trace!("Trace logging is enabled");
     // -- Chat Model --
     let chat_model = ChatModel::new("chat-bison", None)?;
     let chat_session = ChatSession {
@@ -29,7 +34,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }],
     };
 
-    let mut chat_stream = chat_model.stream_chat(vec![chat_session], 10, 0.5).await?;
+    let mut chat_stream = chat_model
+        .stream_chat(vec![chat_session], 1000, 0.5)
+        .await?;
     while let Some(chat_response) = chat_stream.next().await {
         println!("Model Response: {:?}", chat_response);
     }

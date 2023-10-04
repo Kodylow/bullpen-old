@@ -3,7 +3,11 @@ use std::io::Error;
 use bytes::Bytes;
 use futures_util::Stream;
 use lightning_invoice::{Bolt11Invoice, SignedRawBolt11Invoice};
-use reqwest::{header::HeaderValue, Client, Method, Request, RequestBuilder, Response, StatusCode};
+use log::info;
+use reqwest::{
+    header::HeaderValue, Client, ClientBuilder, Method, Request, RequestBuilder, Response,
+    StatusCode,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
@@ -39,9 +43,14 @@ impl L402Client {
     pub fn new() -> Self {
         dotenv::dotenv().ok();
         let l402_token = std::env::var("L402_TOKEN").ok();
-        println!("Found l402_token: {:?}", l402_token);
+        info!("Found l402_token: {:?}", l402_token);
+        // let client = ClientBuilder::new()
+        //     .connection_verbose(true)
+        //     .build()
+        //     .unwrap();
+        let client = Client::new();
         Self {
-            client: Client::new(),
+            client: client,
             bolt11_endpoint: std::env::var("LIGHTNING_API_ENDPOINT").unwrap(),
             api_key: std::env::var("LIGHTNING_API_KEY").unwrap(),
             l402_token: l402_token,
@@ -77,8 +86,53 @@ impl L402Client {
             let request_copy = request.try_clone().unwrap();
             let response = self.client.execute(request).await?;
             if response.status() == StatusCode::PAYMENT_REQUIRED {
-                println!("L402 Payment Required");
-                println!(
+                info!("L402 Payment Required");
+                info!(
+                    "www-authenticate header: {:?}",
+                    response.headers().get("www-authenticate")
+                );
+            }
+
+            let mut l402 = parse_l402_header(
+                response
+                    .headers()
+                    .get("www-authenticate")
+                    .unwrap()
+                    .to_str()
+                    .unwrap(),
+            )
+            .unwrap();
+
+            let preimage = self
+                .pay_invoice(l402.clone().invoice.unwrap())
+                .await
+                .unwrap();
+
+            info!("Preimage: {}", preimage);
+
+            l402.set_preimage(preimage);
+
+            request = add_l402_header(request_copy, l402);
+        }
+
+        let response = self.client.execute(request).await.unwrap();
+        Ok(response)
+    }
+
+    pub async fn execute_stream(
+        &self,
+        mut request: Request,
+    ) -> impl Stream<Item = Result<Bytes, reqwest::Error>> {
+        if self.l402_token.is_some() {
+            request
+                .headers_mut()
+                .insert("AUTHORIZATION", self.get_auth_header());
+        } else {
+            let request_copy = request.try_clone().unwrap();
+            let response = self.client.execute(request).await.unwrap();
+            if response.status() == StatusCode::PAYMENT_REQUIRED {
+                info!("L402 Payment Required");
+                info!(
                     "www-authenticate header: {:?}",
                     response.headers().get("www-authenticate")
                 );
@@ -104,28 +158,11 @@ impl L402Client {
             request = add_l402_header(request_copy, l402);
         }
 
-        let response = self.client.execute(request).await.unwrap();
-
-        println!("Response: {:?}", response);
-
-        Ok(response)
-    }
-
-    pub async fn execute_stream(
-        &self,
-        mut request: Request,
-    ) -> impl Stream<Item = Result<Bytes, reqwest::Error>> {
-        println!("Executing stream...");
-        if self.l402_token.is_some() {
-            request
-                .headers_mut()
-                .insert("AUTHORIZATION", self.get_auth_header());
-        }
         self.client.execute(request).await.unwrap().bytes_stream()
     }
 
     pub async fn pay_invoice(&self, invoice: Bolt11Invoice) -> Result<String, Error> {
-        println!("Paying invoice...");
+        info!("Paying invoice...");
         let alby_request = AlbyBolt11Request {
             invoice: invoice.to_string(),
             amount: None,
@@ -140,9 +177,6 @@ impl L402Client {
 
         let alby_res: AlbyBolt11Response =
             serde_json::from_str(&alby_res.text().await.unwrap()).unwrap();
-
-        println!("Payment Preimage: {}", alby_res.payment_preimage);
-
         Ok(alby_res.payment_preimage)
     }
 }
@@ -180,8 +214,7 @@ pub fn parse_l402_header(header: &str) -> Result<L402, Error> {
         ));
     }
 
-    println!("Token: {}", token);
-    println!("Invoice: {}", invoice);
+    info!("Token: {}", token);
 
     let invoice =
         Bolt11Invoice::from_signed(invoice.parse::<SignedRawBolt11Invoice>().unwrap()).unwrap();

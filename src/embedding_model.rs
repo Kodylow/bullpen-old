@@ -66,8 +66,6 @@ impl EmbeddingModel {
             serde_json::to_value(params).unwrap(),
         );
 
-        println!("Payload: {:?}", payload);
-
         payload
     }
 }

@@ -40,7 +40,6 @@ impl ReplitClient {
             .insert("AUTHORIZATION", self.get_auth_header().parse().unwrap());
 
         let response = self.client.execute(request).await.unwrap();
-        println!("Response: {:?}", response);
 
         Ok(response)
     }

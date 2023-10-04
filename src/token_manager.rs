@@ -1,5 +1,6 @@
 use std::env;
 
+use log::info;
 use serde::Deserialize;
 use std::process::Command;
 
@@ -40,7 +41,7 @@ pub struct ReplitTokenManagerResponse {
 }
 
 pub fn generate_replit_key() -> String {
-    println!("Replit Dynamic API Key ...");
+    info!("Replit Dynamic API Key ...");
     let repl_slug = env::var("REPL_SLUG").expect("REPL_SLUG not set");
     let script_path = format!("/home/runner/{}/replit/get_token.py", repl_slug);
 
@@ -60,7 +61,7 @@ pub fn generate_replit_key() -> String {
     let res: ReplitTokenManagerResponse =
         serde_json::from_str(&proc_stdout).expect("Failed to parse JSON");
 
-    println!("Generated Key!");
+    info!("Generated Key!");
 
     res.token
 }
