@@ -3,3 +3,4 @@
 .env
 .cargo/config.toml
 .cargo
+.pythonlibs
