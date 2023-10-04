@@ -1,5 +1,5 @@
-use crate::client::L402Client;
 use crate::error::ApiError;
+use crate::l402_client::L402Client;
 use crate::token_manager::L402TokenManager;
 use crate::token_manager::ReplitIdentityTokenManager;
 use crate::token_manager::TokenManager;

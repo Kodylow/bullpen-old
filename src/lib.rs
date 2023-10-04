@@ -1,7 +1,7 @@
 pub mod chat_model;
-pub mod client;
 mod config;
 pub mod error;
+pub mod l402_client;
 pub mod model;
 pub mod structs;
 pub mod token_manager;

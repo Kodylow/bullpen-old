@@ -9,7 +9,7 @@ use tokio_stream::StreamExt;
 async fn main() -> Result<(), Box<dyn Error>> {
     let chat_model = ChatModel::new("chat-bison", None)?;
     let chat_session = ChatSession {
-        context: "You are a philosophy bot".to_string(),
+        context: "You are a programmer bot".to_string(),
         examples: vec![ChatExample {
             input: ChatMessage {
                 content: "1 + 1".to_string(),
@@ -21,27 +21,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
             },
         }],
         messages: vec![ChatMessage {
-            content: "What is the meaning of life?".to_string(),
+            content: "What is Replit?".to_string(),
             author: "USER".to_string(),
         }],
     };
-    let mut chat_stream = chat_model.stream_chat(vec![chat_session], 10, 0.7).await?;
-    panic!("This is a panic");
-    let mut counter = 0;
-    let max_responses = 100; // Set this to the maximum number of responses you want to process
 
-    while let Some(chat_response) = chat_stream.next().await {
-        match chat_response {
-            Ok(response) => {
-                println!("{:?}", response);
-                counter += 1;
-                if counter >= max_responses {
-                    break;
-                }
-            }
-            Err(e) => eprintln!("Error: {:?}", e),
-        }
-    }
+    // let mut chat_stream = chat_model.stream_chat(vec![chat_session], 10, 0.5).await?;
+
+    // while let Some(chat_response) = chat_stream.next().await {
+    //     println!("Model Response: {:?}", chat_response);
+    // }
+
+    let chat_response = chat_model.chat(vec![chat_session], 10, 0.5).await.unwrap();
+
+    println!("Model Response: {:?}", chat_response);
 
     Ok(())
 }
