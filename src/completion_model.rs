@@ -1,4 +1,5 @@
 use crate::{error::ApiError, model::Model, structs::CompletionModelResponse};
+use futures_util::stream;
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -40,7 +41,36 @@ impl CompletionModel {
         Ok(completion_response)
     }
 
-    // The async_stream_complete and stream_complete methods would follow similar patterns as chat and stream_chat.
+    pub async fn stream_complete(
+        &self,
+        prompts: Vec<String>,
+        max_output_tokens: i32,
+        temperature: f32,
+    ) -> Result<
+        impl futures_util::stream::Stream<Item = Result<CompletionModelResponse, ApiError>>,
+        ApiError,
+    > {
+        let payload = self.build_request_payload(&prompts, max_output_tokens, temperature);
+
+        let req = self
+            .base
+            .client
+            .post(&format!("{}/v1beta/completion", &self.base.server_url))
+            .json(&payload)
+            .build()?;
+
+        let res = self.base.client.execute(req).await?;
+
+        self.base.check_response(&res)?;
+
+        // Parse the bytes into a CompletionModelResponse
+        let completion_response: CompletionModelResponse =
+            serde_json::from_slice(&res.bytes().await?)?;
+
+        let stream = stream::iter(vec![Ok(completion_response)]);
+
+        Ok(stream)
+    }
 
     fn build_request_payload(
         &self,

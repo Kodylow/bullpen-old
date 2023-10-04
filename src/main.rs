@@ -1,4 +1,5 @@
 use bullpen::{
+    completion_model::CompletionModel,
     embedding_model::EmbeddingModel,
     structs::{ChatExample, ChatMessage, ChatSession},
     ChatModel,
@@ -9,6 +10,8 @@ use std::{collections::HashMap, error::Error};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    // -- Chat Model --
+
     // let chat_model = ChatModel::new("chat-bison", None)?;
     // let chat_session = ChatSession {
     //     context: "You are a programmer bot".to_string(),
@@ -34,14 +37,30 @@ async fn main() -> Result<(), Box<dyn Error>> {
     //     println!("Model Response: {:?}", chat_response);
     // }
 
-    let mut content = HashMap::<String, Value>::new();
-    content.insert("content".to_string(), "Hello world!".into());
+    // -- Embedding Model --
 
-    let embeddings_content = vec![content];
-    let embedding_model = EmbeddingModel::new("textembedding-gecko", None)?;
-    let embeddings = embedding_model.embed(embeddings_content).await?;
+    // let mut content = HashMap::<String, Value>::new();
+    // content.insert("content".to_string(), "Hello world!".into());
 
-    println!("Embeddings: {:?}", embeddings);
+    // let embeddings_content = vec![content];
+    // let embedding_model = EmbeddingModel::new("textembedding-gecko", None)?;
+    // let embeddings = embedding_model.embed(embeddings_content).await?;
+
+    // println!("Embeddings: {:?}", embeddings);
+
+    // Ok(())
+
+    // -- Completion Model --
+
+    let completion_model = CompletionModel::new("text-bison", None)?;
+
+    let prompts = vec!["Hello world!".to_string()];
+
+    let mut completion_stream = completion_model.stream_complete(prompts, 10, 0.5).await?;
+
+    while let Some(completion_response) = completion_stream.next().await {
+        println!("Model Response: {:?}", completion_response);
+    }
 
     Ok(())
 }
