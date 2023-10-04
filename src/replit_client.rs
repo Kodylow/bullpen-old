@@ -54,6 +54,8 @@ impl ReplitClient {
             .headers_mut()
             .insert("AUTHORIZATION", self.get_auth_header().parse().unwrap());
 
+        println!("In here!!!!!");
+
         let response = self.client.execute(request).await?;
 
         // Print the Transfer-Encoding header
@@ -62,8 +64,6 @@ impl ReplitClient {
             response.headers().get("transfer-encoding")
         );
 
-        let stream = response.bytes_stream();
-
-        Ok(stream)
+        Ok(response.bytes_stream())
     }
 }

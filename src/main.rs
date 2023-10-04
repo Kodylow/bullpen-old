@@ -5,8 +5,7 @@ use bullpen::{
     ChatModel,
 };
 use futures_util::StreamExt;
-use serde_json::Value;
-use std::{collections::HashMap, error::Error};
+use std::{error::Error};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -37,24 +36,24 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 
     // -- Embedding Model --
-    let embedding_model = EmbeddingModel::new("textembedding-gecko", None)?;
+    // let embedding_model = EmbeddingModel::new("textembedding-gecko", None)?;
 
-    let embeddings_content = vec![Value::String("Hello world!".to_string())];
+    // let embeddings_content = vec!["Hello world!".to_string(), "Replit Modelfarm in Rust!".to_string()];
 
-    let embeddings = embedding_model.embed(embeddings_content).await?;
+    // let embeddings = embedding_model.embed(embeddings_content).await?;
 
-    println!("Embeddings: {:?}", embeddings);
+    // println!("Embeddings: {:?}", embeddings);
 
     // -- Completion Model --
-    let completion_model = CompletionModel::new("text-bison", None)?;
+    // let completion_model = CompletionModel::new("text-bison", None)?;
 
-    let prompts = vec!["Hello world!".to_string()];
+    // let prompts = vec!["Hello world!".to_string()];
 
-    let mut completion_stream = completion_model.stream_complete(prompts, 10, 0.5).await?;
+    // let mut completion_stream = completion_model.stream_complete(prompts, 10, 0.5).await?;
 
-    while let Some(completion_response) = completion_stream.next().await {
-        println!("Model Response: {:?}", completion_response);
-    }
+    // while let Some(completion_response) = completion_stream.next().await {
+    //     println!("Model Response: {:?}", completion_response);
+    // }
 
     Ok(())
 }

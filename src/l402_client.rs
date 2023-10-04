@@ -110,6 +110,7 @@ impl L402Client {
         &self,
         mut request: Request,
     ) -> Result<impl Stream<Item = Result<Bytes, reqwest::Error>>, reqwest::Error> {
+        println!("Executing stream L402");
         if let Some(token) = &self.l402_token {
             request
                 .headers_mut()
@@ -124,9 +125,7 @@ impl L402Client {
             response.headers().get("transfer-encoding")
         );
 
-        let stream = response.bytes_stream();
-
-        Ok(stream)
+        Ok(response.bytes_stream())
     }
 
     pub async fn pay_invoice(&self, invoice: Bolt11Invoice) -> Result<String, Error> {

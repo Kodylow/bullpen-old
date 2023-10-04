@@ -50,7 +50,7 @@ impl HttpClient {
     ) -> Result<Box<dyn Stream<Item = Result<Bytes, reqwest::Error>> + Unpin>, reqwest::Error> {
         match self {
             HttpClient::ReqwestClient(client) => {
-                let res_stream = client.execute(request).await?.bytes_stream();
+                let res_stream = client.execute_stream(request).await?;
                 Ok(Box::new(res_stream))
             }
             HttpClient::L402Client(client) => {

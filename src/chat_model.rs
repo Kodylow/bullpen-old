@@ -64,9 +64,9 @@ impl ChatModel {
             .json(&payload)
             .build()?;
 
-        println!("Request: {:?}", req);
-        let res = self.base.client.execute_stream(req).await?; // Use the modified execute_stream method
-
+        println!("Here");
+        let res = self.base.client.execute_stream(req).await?;
+        println!("Here2");
         let stream = res.map(|res| {
             let res = res?;
             let chat_response: ChatModelResponse = serde_json::from_slice(&res)?;
