@@ -30,7 +30,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     };
 
     let mut chat_stream = chat_model.stream_chat(vec![chat_session], 10, 0.5).await?;
-    println!("Chat Model Response:");
     while let Some(chat_response) = chat_stream.next().await {
         println!("Model Response: {:?}", chat_response);
     }

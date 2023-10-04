@@ -49,6 +49,10 @@ impl ReplitClient {
         &self,
         request: Request,
     ) -> impl Stream<Item = Result<Bytes, reqwest::Error>> {
+        let mut request = request;
+        request
+            .headers_mut()
+            .insert("AUTHORIZATION", self.get_auth_header().parse().unwrap());
         self.client.execute(request).await.unwrap().bytes_stream()
     }
 }
