@@ -5,6 +5,7 @@ pub mod embedding_model;
 pub mod error;
 pub mod l402_client;
 pub mod model;
+pub mod replit_client;
 pub mod structs;
 pub mod token_manager;
 

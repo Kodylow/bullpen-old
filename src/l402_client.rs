@@ -59,13 +59,17 @@ impl L402Client {
         self.request(Method::POST, url)
     }
 
+    pub fn get_auth_header(&self) -> String {
+        format!("L402 {}", self.api_key)
+    }
+
     // Execute with L402 Handling
     pub async fn execute(&self, request: Request) -> Result<Response, reqwest::Error> {
         let mut request = request;
         if let Some(token) = &self.l402_token {
             request
                 .headers_mut()
-                .insert("AUTHORIZATION", format!("L402 {}", token).parse().unwrap());
+                .insert("AUTHORIZATION", self.get_auth_header().parse().unwrap());
         } else {
             let request_copy = request.try_clone().unwrap();
             let response = self.client.execute(request).await?;

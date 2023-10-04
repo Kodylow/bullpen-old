@@ -1,5 +1,6 @@
 use crate::error::ApiError;
 use crate::l402_client::L402Client;
+use crate::replit_client::ReplitClient;
 use crate::token_manager::L402TokenManager;
 use crate::token_manager::ReplitIdentityTokenManager;
 use crate::token_manager::TokenManager;
@@ -18,7 +19,7 @@ use reqwest::StatusCode;
 use std::env;
 
 pub enum HttpClient {
-    ReqwestClient(Client),
+    ReqwestClient(ReplitClient),
     L402Client(L402Client),
 }
 
@@ -78,7 +79,7 @@ impl Model {
             Ok(Self {
                 server_url: server_url.map_or_else(|| config.root_url.clone(), ToString::to_string),
                 auth: Box::new(ReplitIdentityTokenManager),
-                client: HttpClient::ReqwestClient(Client::new()), // Use reqwest::Client
+                client: HttpClient::ReqwestClient(ReplitClient::new()),
             })
         } else {
             Ok(Self {
