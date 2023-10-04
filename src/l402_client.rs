@@ -121,18 +121,9 @@ impl L402Client {
             response.headers().get("transfer-encoding")
         );
 
-        let mut stream = response.bytes_stream();
+        let stream = response.bytes_stream();
 
-        while let Some(item) = stream.next().await {
-            let chunk = item?;
-            // Process chunk here...
-            println!("chunk {:?}", chunk);
-        }
-
-        panic!("Stream ended");
-
-        // return a dummy stream for now
-        Ok(stream::empty())
+        Ok(stream)
     }
 
     pub async fn pay_invoice(&self, invoice: Bolt11Invoice) -> Result<String, Error> {

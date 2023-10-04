@@ -93,6 +93,11 @@ pub struct ChatModelResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub enum EmbeddingModel {
+    TextEmbeddingGecko,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Embedding {
     pub values: Vec<f64>,
