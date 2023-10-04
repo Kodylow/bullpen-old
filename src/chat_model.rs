@@ -1,4 +1,5 @@
 use futures_util::StreamExt;
+use reqwest_streams::*;
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -66,14 +67,11 @@ impl ChatModel {
         println!("Request: {:?}", req);
         let res = self.base.client.execute_stream(req).await?; // Use the client from base
 
-        let stream = res
-            .map(|res| {
-                let res = res?;
-                println!("Response: {:?}", res);
-                let chat_response: ChatModelResponse = serde_json::from_slice(&res)?;
-                Ok(chat_response)
-            })
-            .boxed();
+        let stream = res.map(|res| {
+            let res = res?;
+            let chat_response: ChatModelResponse = serde_json::from_slice(&res)?;
+            Ok(chat_response)
+        });
 
         Ok(stream)
     }

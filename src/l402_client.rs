@@ -104,9 +104,16 @@ impl L402Client {
 
     pub async fn execute_stream(
         &self,
-        request: Request,
+        mut request: Request,
     ) -> Result<impl Stream<Item = Result<Bytes, reqwest::Error>>, reqwest::Error> {
-        let response = self.execute(request).await?;
+        if let Some(token) = &self.l402_token {
+            request
+                .headers_mut()
+                .insert("AUTHORIZATION", format!("L402 {}", token).parse().unwrap());
+        }
+
+        let response = self.client.execute(request).await?;
+
         Ok(response.bytes_stream())
     }
 

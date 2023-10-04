@@ -2,8 +2,8 @@ use bullpen::{
     structs::{ChatExample, ChatMessage, ChatSession},
     ChatModel,
 };
+use futures_util::StreamExt;
 use std::error::Error;
-use tokio_stream::StreamExt;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
