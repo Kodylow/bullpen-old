@@ -1,5 +1,6 @@
 use bytes::Bytes;
 use futures_util::Stream;
+use futures_util::StreamExt;
 use reqwest::{Request, Response};
 
 use super::{L402Client, ReplitClient};
@@ -34,16 +35,10 @@ impl HttpClient {
     pub async fn execute_stream(
         &self,
         request: Request,
-    ) -> Result<Box<dyn Stream<Item = Result<Bytes, reqwest::Error>> + Unpin>, reqwest::Error> {
+    ) -> Box<dyn Stream<Item = Result<bytes::Bytes, reqwest::Error>> + Unpin> {
         match self {
-            HttpClient::ReqwestClient(client) => {
-                let res_stream = client.execute_stream(request).await?;
-                Ok(Box::new(res_stream))
-            }
-            HttpClient::L402Client(client) => {
-                let res_stream = client.execute_stream(request).await?;
-                Ok(Box::new(res_stream))
-            }
+            HttpClient::ReqwestClient(client) => Box::new(client.execute_stream(request).await),
+            HttpClient::L402Client(client) => Box::new(client.execute_stream(request).await),
         }
     }
 }

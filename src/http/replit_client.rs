@@ -40,6 +40,7 @@ impl ReplitClient {
             .insert("AUTHORIZATION", self.get_auth_header().parse().unwrap());
 
         let response = self.client.execute(request).await.unwrap();
+        println!("Response: {:?}", response);
 
         Ok(response)
     }
@@ -47,7 +48,7 @@ impl ReplitClient {
     pub async fn execute_stream(
         &self,
         request: Request,
-    ) -> Result<impl Stream<Item = Result<Bytes, reqwest::Error>>, reqwest::Error> {
-        Ok(self.execute(request).await?.bytes_stream())
+    ) -> impl Stream<Item = Result<Bytes, reqwest::Error>> {
+        self.client.execute(request).await.unwrap().bytes_stream()
     }
 }
