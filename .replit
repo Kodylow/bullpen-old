@@ -1,25 +1,12 @@
-run = "cargo run"
-hidden = ["target"]
+run = "DEBUG_LOG=info cargo run"
+modules = ["python-3.10:v18-20230807-322e88b"]
 
-[packager]
-language = "rust"
-
-[packager.features]
-packageSearch = true
+hidden = [".pythonlibs"]
 
 [nix]
-channel = "stable-22_11"
-
-[gitHubImport]
-requiredFiles = [".replit", "replit.nix"]
-
-[languages]
-
-[languages.rust]
-pattern = "**/*.rs"
-
-[languages.rust.languageServer]
-start = "rust-analyzer"
+channel = "stable-23_05"
 
 [deployment]
+deploymentTarget = "cloudrun"
+build = ["sh", "-c", "cargo build"]
 run = ["sh", "-c", "cargo run"]
