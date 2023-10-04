@@ -5,8 +5,10 @@ use crate::token_manager::ReplitIdentityTokenManager;
 use crate::token_manager::TokenManager;
 use bytes::Buf;
 use bytes::BufMut;
+use bytes::Bytes;
 use bytes::BytesMut;
 use futures_util::stream;
+use futures_util::Stream;
 use futures_util::StreamExt;
 use reqwest::header::HeaderMap;
 use reqwest::Body;
@@ -16,21 +18,60 @@ use reqwest::Response;
 use reqwest::StatusCode;
 use serde_json::{from_str, Value};
 use std::env;
-use std::time::Duration;
-use tokio::time::sleep;
-use tokio_stream::Stream;
 
-// Model struct
+pub enum HttpClient {
+    ReqwestClient(Client),
+    L402Client(L402Client),
+}
+
+impl HttpClient {
+    pub fn post(&self, url: &str) -> reqwest::RequestBuilder {
+        match self {
+            HttpClient::ReqwestClient(client) => client.post(url),
+            HttpClient::L402Client(client) => client.post(url),
+        }
+    }
+
+    pub fn get(&self, url: &str) -> reqwest::RequestBuilder {
+        match self {
+            HttpClient::ReqwestClient(client) => client.get(url),
+            HttpClient::L402Client(client) => client.get(url),
+        }
+    }
+
+    pub async fn execute(&self, request: Request) -> Result<Response, reqwest::Error> {
+        match self {
+            HttpClient::ReqwestClient(client) => client.execute(request).await,
+            HttpClient::L402Client(client) => client.execute(request).await,
+        }
+    }
+
+    pub async fn execute_stream(
+        &self,
+        request: Request,
+    ) -> Result<Box<dyn Stream<Item = Result<Bytes, reqwest::Error>> + Unpin>, reqwest::Error> {
+        match self {
+            HttpClient::ReqwestClient(client) => {
+                let res_stream = client.execute(request).await?.bytes_stream();
+                Ok(Box::new(res_stream))
+            }
+            HttpClient::L402Client(client) => {
+                let res_stream = client.execute_stream(request).await?;
+                Ok(Box::new(res_stream))
+            }
+        }
+    }
+}
+
 pub struct Model {
     pub server_url: String,
     pub auth: Box<dyn TokenManager>,
-    pub client: L402Client,
+    pub client: HttpClient,
 }
 
 impl Model {
     pub fn new(server_url: Option<&str>) -> Result<Self, ApiError> {
         let config = crate::config::get_config();
-        let client = L402Client::new();
         if env::var("REPLIT_DEPLOYMENT").is_ok()
             || env::var("REPL_IDENTITY_KEY").is_ok()
             || env::var("REPL_IDENTITY").is_ok()
@@ -39,14 +80,14 @@ impl Model {
             Ok(Self {
                 server_url: server_url.map_or_else(|| config.root_url.clone(), ToString::to_string),
                 auth: Box::new(ReplitIdentityTokenManager),
-                client,
+                client: HttpClient::ReqwestClient(Client::new()), // Use reqwest::Client
             })
         } else {
             Ok(Self {
                 server_url: server_url
                     .map_or_else(|| config.matador_url.clone(), ToString::to_string),
                 auth: Box::new(L402TokenManager),
-                client,
+                client: HttpClient::L402Client(L402Client::new()), // Use L402Client
             })
         }
     }

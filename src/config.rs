@@ -37,6 +37,7 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Self {
+        dotenv::dotenv().ok();
         Config {
             root_url: "https://production-modelfarm.replit.com".to_string(),
             matador_url: "https://matador-replit.kody.repl.co/replit".to_string(),

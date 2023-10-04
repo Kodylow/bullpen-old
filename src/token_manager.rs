@@ -9,9 +9,7 @@ pub trait TokenManager {
 pub struct ReplitIdentityTokenManager;
 
 impl TokenManager for ReplitIdentityTokenManager {
-    fn get_token(&self) -> String {
-        "REPL_IDENTITY_TOKEN".to_string() // Dummy implementation
-    }
+    fn get_token(&self) -> String {}
 
     fn get_token_type(&self) -> String {
         "Bearer".to_string()
