@@ -2,6 +2,7 @@ run = "DEBUG_LOG=info cargo run"
 modules = ["python-3.10:v18-20230807-322e88b"]
 
 hidden = [".pythonlibs"]
+entrypoint = "main.py"
 
 [nix]
 channel = "stable-23_05"
