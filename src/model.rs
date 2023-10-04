@@ -11,7 +11,6 @@ use futures_util::Stream;
 
 use reqwest::header::HeaderMap;
 
-use reqwest::Client;
 use reqwest::Request;
 use reqwest::Response;
 use reqwest::StatusCode;

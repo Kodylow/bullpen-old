@@ -1,10 +1,8 @@
-use std::io::Error;
 
 use bytes::Bytes;
 use futures_util::Stream;
-use lightning_invoice::{Bolt11Invoice, SignedRawBolt11Invoice};
-use reqwest::{Client, Method, Request, RequestBuilder, Response, StatusCode};
-use serde::{Deserialize, Serialize};
+use reqwest::{Client, Method, Request, RequestBuilder, Response};
+use crate::token_manager::generate_replit_key;
 
 pub struct ReplitClient {
     pub client: Client,
@@ -16,7 +14,7 @@ impl ReplitClient {
         dotenv::dotenv().ok();
         Self {
             client: Client::new(),
-            api_key: std::env::var("LIGHTNING_API_KEY").unwrap(),
+            api_key: generate_replit_key(),
         }
     }
 
