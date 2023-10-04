@@ -1,4 +1,5 @@
 pub mod chat_model;
+pub mod client;
 mod config;
 pub mod error;
 pub mod model;

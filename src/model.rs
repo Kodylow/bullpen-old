@@ -1,3 +1,4 @@
+use crate::client::L402Client;
 use crate::error::ApiError;
 use crate::token_manager::L402TokenManager;
 use crate::token_manager::ReplitIdentityTokenManager;
@@ -10,23 +11,26 @@ use futures_util::StreamExt;
 use reqwest::header::HeaderMap;
 use reqwest::Body;
 use reqwest::Client;
+use reqwest::Request;
 use reqwest::Response;
 use reqwest::StatusCode;
 use serde_json::{from_str, Value};
 use std::env;
+use std::time::Duration;
+use tokio::time::sleep;
 use tokio_stream::Stream;
 
 // Model struct
 pub struct Model {
     pub server_url: String,
     pub auth: Box<dyn TokenManager>,
-    pub client: Client,
+    pub client: L402Client,
 }
 
 impl Model {
     pub fn new(server_url: Option<&str>) -> Result<Self, ApiError> {
         let config = crate::config::get_config();
-        let client = Client::new();
+        let client = L402Client::new();
         if env::var("REPLIT_DEPLOYMENT").is_ok()
             || env::var("REPL_IDENTITY_KEY").is_ok()
             || env::var("REPL_IDENTITY").is_ok()
