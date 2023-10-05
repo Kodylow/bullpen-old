@@ -37,8 +37,8 @@ impl HttpClient {
         request: Request,
     ) -> impl Stream<Item = Result<Bytes, reqwest::Error>> {
         match self {
-            // HttpClient::ReqwestClient(client) => Box::new(client.execute_stream(request).await),
-            HttpClient::L402Client(client) => Box::new(client.execute_stream(request).await),
+            // HttpClient::ReqwestClient(client) => client.execute_stream(request).await,
+            HttpClient::L402Client(client) => client.execute_stream(request).await,
         }
     }
 }
