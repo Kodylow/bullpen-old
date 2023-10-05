@@ -4,10 +4,7 @@ use bytes::Bytes;
 use futures_util::Stream;
 use lightning_invoice::{Bolt11Invoice, SignedRawBolt11Invoice};
 use log::info;
-use reqwest::{
-    header::HeaderValue, Client, ClientBuilder, Method, Request, RequestBuilder, Response,
-    StatusCode,
-};
+use reqwest::{header::HeaderValue, Client, Method, Request, RequestBuilder, Response, StatusCode};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]

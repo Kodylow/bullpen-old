@@ -1,6 +1,5 @@
-use bytes::Bytes;
 use futures_util::Stream;
-use futures_util::StreamExt;
+
 use reqwest::{Request, Response};
 
 use super::{L402Client, ReplitClient};

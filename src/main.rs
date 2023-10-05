@@ -1,6 +1,4 @@
 use bullpen::{
-    completion_model::CompletionModel,
-    embedding_model::EmbeddingModel,
     structs::{ChatExample, ChatMessage, ChatSession},
     ChatModel,
 };
