@@ -1,13 +1,10 @@
-pub mod chat_model;
-pub mod completion_model;
+#![feature(return_position_impl_trait_in_trait)]
+#![feature(async_fn_in_trait)]
+#![feature(type_alias_impl_trait)]
 mod config;
-pub mod embedding_model;
 pub mod error;
 pub mod http;
-pub mod model;
-pub mod structs;
+pub mod models;
 pub mod token_manager;
 
 mod utils;
-
-pub use chat_model::ChatModel;

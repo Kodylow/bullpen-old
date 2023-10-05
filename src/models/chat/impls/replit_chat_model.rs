@@ -1,24 +1,27 @@
-use futures_util::StreamExt;
-
-use serde_json::Value;
 use std::collections::HashMap;
+
+use futures_util::stream::{self, StreamExt};
+use log::warn;
+use serde_json::Value;
 
 use crate::{
     error::ApiError,
-    model::Model,
-    structs::{ChatModelResponse, ChatSession},
+    models::{
+        base::Model,
+        chat::structs::{ChatModelResponse, ChatSession},
+    },
 };
 
-pub struct ChatModel {
+pub struct ReplitChatModel {
     base: Model,
     model_name: String,
 }
 
-impl ChatModel {
+impl ReplitChatModel {
     pub fn new(model_name: &str, server_url: Option<&str>) -> Result<Self, ApiError> {
         let base = Model::new(server_url)?;
         let model_name = model_name.to_string();
-        Ok(ChatModel { base, model_name })
+        Ok(ReplitChatModel { base, model_name })
     }
 
     pub async fn chat(
@@ -51,10 +54,7 @@ impl ChatModel {
         prompts: Vec<ChatSession>,
         max_output_tokens: i32,
         temperature: f32,
-    ) -> Result<
-        impl futures_util::stream::Stream<Item = Result<ChatModelResponse, ApiError>>,
-        ApiError,
-    > {
+    ) -> impl futures_util::stream::Stream<Item = Result<ChatModelResponse, ApiError>> {
         let payload = self.build_request_payload(&prompts, max_output_tokens, temperature);
 
         let req = self
@@ -62,22 +62,21 @@ impl ChatModel {
             .client // Use the client from base
             .post(&format!("{}/v1beta/chat_streaming", &self.base.server_url))
             .json(&payload)
-            .build()?;
+            .build()
+            .unwrap();
 
-        let res = self.base.client.execute_stream(req).await;
+        let res = self.base.client.execute_stream(req).await; // Use the client from base
 
-        let stream = res.map(|res| {
+        res.map(|res| {
             let res = res?;
             let chat_response: ChatModelResponse = serde_json::from_slice(&res)?;
             Ok(chat_response)
-        });
-
-        Ok(stream)
+        })
     }
 
-    fn build_request_payload(
+    pub fn build_request_payload(
         &self,
-        prompts: &Vec<ChatSession>,
+        prompts: &[ChatSession],
         max_output_tokens: i32,
         temperature: f32,
     ) -> HashMap<String, Value> {

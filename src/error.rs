@@ -7,6 +7,7 @@ pub enum ApiError {
     ReqwestError(reqwest::Error),
     SerdeError(serde_json::Error),
     InvalidRequest(String),
+    ModelCreationError(String),
 }
 
 impl From<JsonError> for ApiError {
@@ -27,6 +28,7 @@ impl fmt::Display for ApiError {
             ApiError::ReqwestError(err) => write!(f, "Reqwest error {}", err),
             ApiError::SerdeError(err) => write!(f, "Serde error {}", err),
             ApiError::InvalidRequest(err) => write!(f, "Invalid request {}", err),
+            ApiError::ModelCreationError(err) => write!(f, "Model Creation Error {}", err),
         }
     }
 }

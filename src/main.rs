@@ -1,7 +1,4 @@
-use bullpen::{
-    structs::{ChatExample, ChatMessage, ChatSession},
-    ChatModel,
-};
+use bullpen::models::chat::{ChatExample, ChatMessage, ChatModel, ChatSession};
 use futures_util::StreamExt;
 use std::error::Error;
 
@@ -32,9 +29,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }],
     };
 
-    let mut chat_stream = chat_model
-        .stream_chat(vec![chat_session], 1000, 0.5)
-        .await?;
+    let mut chat_stream = chat_model.stream_chat(vec![chat_session], 1000, 0.5).await;
     while let Some(chat_response) = chat_stream.next().await {
         println!("Model Response: {:?}", chat_response);
     }
