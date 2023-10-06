@@ -6,11 +6,12 @@ use crate::error::ApiError;
 use super::{
     impls::replit_chat_model::ReplitChatModel,
     structs::{ChatModelResponse, ChatSession},
+    ChatModels,
 };
 
 pub enum ChatModelInner {
     ReplitChat(ReplitChatModel),
-    // Add other models here in the future if needed.
+    // Add other models here
 }
 
 pub struct ChatModel {
@@ -18,9 +19,9 @@ pub struct ChatModel {
 }
 
 impl ChatModel {
-    pub fn new(model_name: &str, server_url: Option<&str>) -> Result<Self, ApiError> {
+    pub fn new(model_name: ChatModels, server_url: Option<&str>) -> Result<Self, ApiError> {
         let inner = match model_name {
-            "chat-bison" => {
+            ChatModels::ChatBison => {
                 ChatModelInner::ReplitChat(ReplitChatModel::new("chat-bison", server_url)?)
             }
             _ => {
@@ -42,7 +43,7 @@ impl ChatModel {
         match &self.inner {
             ChatModelInner::ReplitChat(model) => {
                 model.chat(prompts, max_output_tokens, temperature).await
-            } // Handle other models similarly if added in the future.
+            }
         }
     }
 
@@ -58,19 +59,6 @@ impl ChatModel {
                     .stream_chat(prompts, max_output_tokens, temperature)
                     .await
             }
-        }
-    }
-
-    pub fn build_request_payload(
-        &self,
-        prompts: &[ChatSession],
-        max_output_tokens: i32,
-        temperature: f32,
-    ) -> HashMap<String, Value> {
-        match &self.inner {
-            ChatModelInner::ReplitChat(model) => {
-                model.build_request_payload(prompts, max_output_tokens, temperature)
-            } // Handle other models similarly if added in the future.
         }
     }
 }
