@@ -4,14 +4,14 @@ use std::collections::HashMap;
 use crate::error::ApiError;
 
 use super::{
-    impls::replit_chat_model::ReplitChatModel,
+    impls::{OpenAiChatModel, ReplitChatModel},
     structs::{ChatModelResponse, ChatSession},
     ChatModels,
 };
 
 pub enum ChatModelInner {
     ReplitChat(ReplitChatModel),
-    // Add other models here
+    OpenAiChat(OpenAiChatModel),
 }
 
 pub struct ChatModel {
@@ -19,10 +19,20 @@ pub struct ChatModel {
 }
 
 impl ChatModel {
-    pub fn new(model_name: ChatModels, server_url: Option<&str>) -> Result<Self, ApiError> {
+    pub fn new(model_name: ChatModels, mut server_url: Option<&str>) -> Result<Self, ApiError> {
+        if server_url.is_some() {
+            server_url =
+                Some(format!("{}/{}", server_url.unwrap(), model_name.uri_prefix()).as_str());
+        }
         let inner = match model_name {
             ChatModels::ChatBison => {
-                ChatModelInner::ReplitChat(ReplitChatModel::new("chat-bison", server_url)?)
+                ChatModelInner::ReplitChat(ReplitChatModel::new(model_name.as_str(), server_url)?)
+            }
+            ChatModels::Gpt35Turbo => {
+                ChatModelInner::OpenAiChat(OpenAiChatModel::new(model_name.as_str(), server_url)?)
+            }
+            ChatModels::Gpt4 => {
+                ChatModelInner::OpenAiChat(OpenAiChatModel::new(model_name.as_str(), server_url)?)
             }
             _ => {
                 return Err(ApiError::ModelCreationError(
@@ -44,6 +54,9 @@ impl ChatModel {
             ChatModelInner::ReplitChat(model) => {
                 model.chat(prompts, max_output_tokens, temperature).await
             }
+            ChatModelInner::OpenAiChat(model) => {
+                model.chat(prompts, max_output_tokens, temperature).await
+            }
         }
     }
 
@@ -55,6 +68,11 @@ impl ChatModel {
     ) -> impl futures_util::stream::Stream<Item = Result<ChatModelResponse, ApiError>> {
         match &self.inner {
             ChatModelInner::ReplitChat(model) => {
+                model
+                    .stream_chat(prompts, max_output_tokens, temperature)
+                    .await
+            }
+            ChatModelInner::OpenAiChat(model) => {
                 model
                     .stream_chat(prompts, max_output_tokens, temperature)
                     .await

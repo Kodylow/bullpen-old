@@ -40,7 +40,7 @@ impl Config {
         dotenv::dotenv().ok();
         Config {
             root_url: "https://production-modelfarm.replit.com".to_string(),
-            matador_url: "https://matador-replit.kody.repl.co/replit".to_string(),
+            matador_url: "https://matador-replit.kody.repl.co".to_string(),
             audience: "modelfarm@replit.com".to_string(),
             lightning_backend: LightningBackend::default(),
         }
