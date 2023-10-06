@@ -5,7 +5,10 @@ use serde_json::Value;
 
 use crate::{
     error::ApiError,
-    models::{base::Model, completion::structs::CompletionModelResponse},
+    models::{
+        base::{structs::PinBoxStream, Model},
+        completion::{completion_model::CompletionModelTrait, structs::CompletionModelResponse},
+    },
 };
 
 pub struct ReplitCompletionModel {
@@ -20,7 +23,32 @@ impl ReplitCompletionModel {
         Ok(ReplitCompletionModel { base, model_name })
     }
 
-    pub async fn complete(
+    pub fn build_request_payload(
+        &self,
+        prompts: &Vec<String>,
+        max_output_tokens: i32,
+        temperature: f32,
+    ) -> HashMap<String, Value> {
+        let mut payload = HashMap::new();
+        payload.insert("model".to_string(), self.model_name.clone().into());
+
+        let mut parameters: HashMap<String, serde_json::Value> = HashMap::new();
+        parameters.insert("prompts".to_string(), prompts.clone().into());
+        parameters.insert("temperature".to_string(), temperature.into());
+        parameters.insert("maxOutputTokens".to_string(), max_output_tokens.into());
+
+        payload.insert(
+            "parameters".to_string(),
+            serde_json::to_value(parameters).unwrap(),
+        );
+
+        payload
+    }
+}
+
+#[async_trait::async_trait(?Send)]
+impl CompletionModelTrait for ReplitCompletionModel {
+    async fn complete(
         &self,
         prompts: Vec<String>,
         max_output_tokens: i32,
@@ -45,15 +73,12 @@ impl ReplitCompletionModel {
         Ok(completion_response)
     }
 
-    pub async fn stream_complete(
+    async fn stream_complete(
         &self,
         prompts: Vec<String>,
         max_output_tokens: i32,
         temperature: f32,
-    ) -> Result<
-        impl futures_util::stream::Stream<Item = Result<CompletionModelResponse, ApiError>>,
-        ApiError,
-    > {
+    ) -> PinBoxStream<CompletionModelResponse> {
         let payload = self.build_request_payload(&prompts, max_output_tokens, temperature);
 
         let req = self
@@ -61,40 +86,15 @@ impl ReplitCompletionModel {
             .client
             .post(&format!("{}/v1beta/completion", &self.base.server_url))
             .json(&payload)
-            .build()?;
+            .build()
+            .unwrap();
 
-        let res = self.base.client.execute(req).await?;
+        let res = self.base.client.execute(req).await.unwrap().bytes_stream();
 
-        self.base.check_response(&res)?;
-
-        // Parse the bytes into a CompletionModelResponse
-        let completion_response: CompletionModelResponse =
-            serde_json::from_slice(&res.bytes().await?)?;
-
-        let stream = stream::iter(vec![Ok(completion_response)]);
-
-        Ok(stream)
-    }
-
-    pub fn build_request_payload(
-        &self,
-        prompts: &Vec<String>,
-        max_output_tokens: i32,
-        temperature: f32,
-    ) -> HashMap<String, Value> {
-        let mut payload = HashMap::new();
-        payload.insert("model".to_string(), self.model_name.clone().into());
-
-        let mut parameters: HashMap<String, serde_json::Value> = HashMap::new();
-        parameters.insert("prompts".to_string(), prompts.clone().into());
-        parameters.insert("temperature".to_string(), temperature.into());
-        parameters.insert("maxOutputTokens".to_string(), max_output_tokens.into());
-
-        payload.insert(
-            "parameters".to_string(),
-            serde_json::to_value(parameters).unwrap(),
-        );
-
-        payload
+        Box::pin(res.map(|res| {
+            let res = res?;
+            let chat_response: CompletionModelResponse = serde_json::from_slice(&res)?;
+            Ok(chat_response)
+        }))
     }
 }
