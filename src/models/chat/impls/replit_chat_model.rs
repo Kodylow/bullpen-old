@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, pin::Pin};
 
 use futures_util::stream::{self, StreamExt};
 use log::warn;
@@ -7,8 +7,12 @@ use serde_json::Value;
 use crate::{
     error::ApiError,
     models::{
-        base::Model,
-        chat::structs::{ChatModelResponse, ChatSession},
+        base::{structs::PinBoxStream, Model},
+        chat::{
+            chat_model::ChatModelTrait,
+            structs::{ChatModelResponse, ChatSession},
+        },
+        ChatModel,
     },
 };
 
@@ -17,14 +21,9 @@ pub struct ReplitChatModel {
     model_name: String,
 }
 
-impl ReplitChatModel {
-    pub fn new(model_name: &str, server_url: Option<&str>) -> Result<Self, ApiError> {
-        let base = Model::new(server_url)?;
-        let model_name = model_name.to_string();
-        Ok(ReplitChatModel { base, model_name })
-    }
-
-    pub async fn chat(
+#[async_trait::async_trait(?Send)]
+impl ChatModelTrait for ReplitChatModel {
+    async fn chat(
         &self,
         prompts: Vec<ChatSession>,
         max_output_tokens: i32,
@@ -49,12 +48,12 @@ impl ReplitChatModel {
         Ok(chat_response)
     }
 
-    pub async fn stream_chat(
+    async fn stream_chat(
         &self,
         prompts: Vec<ChatSession>,
         max_output_tokens: i32,
         temperature: f32,
-    ) -> impl futures_util::stream::Stream<Item = Result<ChatModelResponse, ApiError>> {
+    ) -> PinBoxStream<ChatModelResponse> {
         let payload = self.build_request_payload(&prompts, max_output_tokens, temperature);
 
         let req = self
@@ -67,11 +66,19 @@ impl ReplitChatModel {
 
         let res = self.base.client.execute_stream(req).await; // Use the client from base
 
-        res.map(|res| {
+        Box::pin(res.map(|res| {
             let res = res?;
             let chat_response: ChatModelResponse = serde_json::from_slice(&res)?;
             Ok(chat_response)
-        })
+        }))
+    }
+}
+
+impl ReplitChatModel {
+    pub fn new(model_name: &str, server_url: Option<&str>) -> Result<Self, ApiError> {
+        let base = Model::new(server_url)?;
+        let model_name = model_name.to_string();
+        Ok(ReplitChatModel { base, model_name })
     }
 
     pub fn build_request_payload(

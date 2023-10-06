@@ -111,7 +111,7 @@ impl L402Client {
 
             request = add_l402_header(request_copy, l402);
         }
-
+        println!("Request: {:?}", request);
         let response = self.client.execute(request).await.unwrap();
         Ok(response)
     }
@@ -229,7 +229,7 @@ struct AlbyBolt11Request {
     amount: Option<u64>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct AlbyBolt11Response {
     payment_preimage: String,
 }

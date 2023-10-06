@@ -103,7 +103,9 @@ checksum = "b4682ae6287fcf752ecaabbfcc7b6f9b72aa33933dc23a554d853aea8eea8635"
 name = "bullpen"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "bytes",
+ "bytes-stream",
  "dotenv",
  "env_logger",
  "futures-util",
@@ -117,6 +119,7 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tracing",
+ "url",
 ]
 
 [[package]]
@@ -130,6 +133,17 @@ name = "bytes"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2bd12c1caf447e69cd4528f47f94d203fd2582878ecb9e9465484c4148a8223"
+
+[[package]]
+name = "bytes-stream"
+version = "0.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c74d2aa520b426169bea4852a5926d5284bb5c02b4ba6940db269f951cf1f3a"
+dependencies = [
+ "bytes",
+ "futures-core",
+ "pin-project-lite",
+]
 
 [[package]]
 name = "cargo-husky"

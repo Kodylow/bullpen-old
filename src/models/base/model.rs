@@ -17,6 +17,18 @@ pub struct Model {
     pub client: HttpClient,
 }
 
+pub trait ModelTrait {
+    fn new(server_url: Option<&str>) -> Result<Self, ApiError>
+    where
+        Self: Sized;
+
+    fn check_response(&self, response: &Response) -> Result<(), ApiError>;
+
+    fn get_auth_headers(&self) -> HeaderMap;
+
+    fn check_streaming_response(&self, response: &Response) -> Result<(), ApiError>;
+}
+
 impl Model {
     pub fn new(server_url: Option<&str>) -> Result<Self, ApiError> {
         let config = crate::config::get_config();

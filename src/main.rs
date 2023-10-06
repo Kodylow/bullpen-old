@@ -1,5 +1,8 @@
 use bullpen::models::{
-    chat::{ChatExample, ChatMessage, ChatModel, ChatModels::ChatBison, ChatSession},
+    chat::{
+        chat_model::ChatModelTrait, ChatExample, ChatMessage, ChatModel, ChatModels::ChatBison,
+        ChatSession,
+    },
     completion::CompletionModels::TextBison,
     embedding::EmbeddingModels::TextEmbeddingGecko,
     CompletionModel, EmbeddingModel,
@@ -36,32 +39,33 @@ async fn main() -> Result<(), Box<dyn Error>> {
     };
 
     let mut chat_stream = chat_model.stream_chat(vec![chat_session], 1000, 0.5).await;
+
     while let Some(chat_response) = chat_stream.next().await {
         info!("Model Response: {:?}", chat_response);
     }
 
-    // -- Embedding Model --
-    let embedding_model = EmbeddingModel::new(TextEmbeddingGecko, None)?;
+    // // -- Embedding Model --
+    // let embedding_model = EmbeddingModel::new(TextEmbeddingGecko, None)?;
 
-    let embeddings_content = vec![
-        "Hello world!".to_string(),
-        "Replit Modelfarm in Rust!".to_string(),
-    ];
+    // let embeddings_content = vec![
+    //     "Hello world!".to_string(),
+    //     "Replit Modelfarm in Rust!".to_string(),
+    // ];
 
-    let embeddings = embedding_model.embed(embeddings_content).await?;
+    // let embeddings = embedding_model.embed(embeddings_content).await?;
 
-    println!("Embeddings: {:?}", embeddings);
+    // println!("Embeddings: {:?}", embeddings);
 
-    // -- Completion Model --
-    let completion_model = CompletionModel::new(TextBison, None)?;
+    // // -- Completion Model --
+    // let completion_model = CompletionModel::new(TextBison, None)?;
 
-    let prompts = vec!["Hello world!".to_string()];
+    // let prompts = vec!["Hello world!".to_string()];
 
-    let mut completion_stream = completion_model.stream_complete(prompts, 10, 0.5).await?;
+    // let mut completion_stream = completion_model.stream_complete(prompts, 10, 0.5).await?;
 
-    while let Some(completion_response) = completion_stream.next().await {
-        println!("Model Response: {:?}", completion_response);
-    }
+    // while let Some(completion_response) = completion_stream.next().await {
+    //     println!("Model Response: {:?}", completion_response);
+    // }
 
     Ok(())
 }
