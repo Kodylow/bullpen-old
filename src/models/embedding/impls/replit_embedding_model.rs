@@ -1,13 +1,11 @@
-use crate::{
-    error::ApiError,
-    models::{
-        base::Model,
-        embedding::{structs::EmbeddingModelResponse},
-    },
-};
+use std::collections::HashMap;
 
 use serde_json::Value;
-use std::collections::HashMap;
+
+use crate::error::ApiError;
+use crate::models::base::Model;
+use crate::models::embedding::embedding_model::EmbeddingModelTrait;
+use crate::models::embedding::structs::EmbeddingModelResponse;
 
 pub struct ReplitEmbeddingModel {
     base: Model,
@@ -19,27 +17,6 @@ impl ReplitEmbeddingModel {
         let base = Model::new(server_url)?;
         let model_name = model_name.to_string();
         Ok(ReplitEmbeddingModel { base, model_name })
-    }
-
-    pub async fn embed(&self, content: Vec<String>) -> Result<EmbeddingModelResponse, ApiError> {
-        let payload = self.build_request_payload(&content, &HashMap::new());
-
-        let req = self
-            .base
-            .client
-            .post(&format!("{}/v1beta/embedding", &self.base.server_url))
-            .json(&payload)
-            .build()?;
-
-        let res = self.base.client.execute(req).await?;
-
-        self.base.check_response(&res)?;
-
-        // Parse the bytes into an EmbeddingModelResponse
-        let embedding_response: EmbeddingModelResponse =
-            serde_json::from_slice(&res.bytes().await?)?;
-
-        Ok(embedding_response)
     }
 
     fn build_request_payload(
@@ -71,5 +48,29 @@ impl ReplitEmbeddingModel {
         );
 
         payload
+    }
+}
+
+#[async_trait::async_trait(?Send)]
+impl EmbeddingModelTrait for ReplitEmbeddingModel {
+    async fn embed(&self, content: Vec<String>) -> Result<EmbeddingModelResponse, ApiError> {
+        let payload = self.build_request_payload(&content, &HashMap::new());
+
+        let req = self
+            .base
+            .client
+            .post(&format!("{}/v1beta/embedding", &self.base.server_url))
+            .json(&payload)
+            .build()?;
+
+        let res = self.base.client.execute(req).await?;
+
+        self.base.check_response(&res)?;
+
+        // Parse the bytes into an EmbeddingModelResponse
+        let embedding_response: EmbeddingModelResponse =
+            serde_json::from_slice(&res.bytes().await?)?;
+
+        Ok(embedding_response)
     }
 }

@@ -1,12 +1,10 @@
-use bullpen::models::{
-    chat::{
-        chat_model::ChatModelTrait, ChatExample, ChatMessage, ChatModel, ChatModels::ChatBison,
-        ChatSession,
-    },
-};
+use std::error::Error;
+
+use bullpen::models::chat::chat_model::ChatModelTrait;
+use bullpen::models::chat::ChatModels::ChatBison;
+use bullpen::models::chat::{ChatExample, ChatMessage, ChatModel, ChatSession};
 use futures_util::StreamExt;
 use log::info;
-use std::error::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -35,7 +33,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }],
     };
 
-    let mut chat_stream = chat_model.stream_chat(vec![chat_session], 1000, 0.5).await;
+    let mut chat_stream = chat_model.stream_chat(vec![chat_session], 2000, 0.5).await;
 
     while let Some(chat_response) = chat_stream.next().await {
         info!("Model Response: {:?}", chat_response);
@@ -58,7 +56,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // let prompts = vec!["Hello world!".to_string()];
 
-    // let mut completion_stream = completion_model.stream_complete(prompts, 10, 0.5).await?;
+    // let mut completion_stream = completion_model.stream_complete(prompts, 10,
+    // 0.5).await?;
 
     // while let Some(completion_response) = completion_stream.next().await {
     //     println!("Model Response: {:?}", completion_response);

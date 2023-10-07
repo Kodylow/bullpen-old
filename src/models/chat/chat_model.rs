@@ -22,9 +22,6 @@ impl ChatModel {
             ChatModels::Gpt4 => Ok(Self {
                 inner: Box::new(OpenAiChatModel::new(model_name.as_str(), server_url)?),
             }),
-            _ => Err(ApiError::ModelCreationError(
-                "No matching chat model".to_string(),
-            )),
         }
     }
 }

@@ -14,11 +14,6 @@ impl CompletionModel {
             CompletionModels::TextBison => Ok(Self {
                 inner: Box::new(ReplitCompletionModel::new(model_name.as_str(), server_url)?),
             }),
-            _ => {
-                return Err(ApiError::ModelCreationError(
-                    "No matching completion model".to_string(),
-                ))
-            }
         }
     }
 }

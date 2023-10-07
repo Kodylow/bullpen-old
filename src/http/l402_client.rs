@@ -89,14 +89,16 @@ impl L402Client {
             .unwrap();
         l402.set_preimage(preimage);
         let request = add_l402_header(req_clone, l402);
+        info!("Retrying with L402 Header");
         self.client.execute(request).await
     }
 
     pub async fn pay_invoice(&self, invoice: Bolt11Invoice) -> Result<String, Error> {
+        info!("Paying invoice: {}", invoice.to_string());
         let request = self
             .client
             .post(self.bolt11_endpoint.as_str())
-            .header("Authorization", self.get_auth_header())
+            .header("Authorization", self.api_key.clone())
             .json(&AlbyBolt11Request {
                 invoice: invoice.to_string(),
                 amount: None,
@@ -107,6 +109,8 @@ impl L402Client {
         let response = self.client.execute(request).await.unwrap();
 
         let response: AlbyBolt11Response = response.json().await.unwrap();
+
+        info!("Payment Preimage: {}", response.payment_preimage);
 
         Ok(response.payment_preimage)
     }
