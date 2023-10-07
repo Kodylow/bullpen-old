@@ -67,6 +67,34 @@ impl L402Client {
             .unwrap()
     }
 
+    async fn handle_l402(
+        &self,
+        req_clone: Request,
+        response: Response,
+    ) -> Result<Response, reqwest::Error> {
+        info!("L402 Payment Required");
+        info!(
+            "www-authenticate header: {:?}",
+            response.headers().get("www-authenticate")
+        );
+        let mut l402 = parse_l402_header(
+            response
+                .headers()
+                .get("www-authenticate")
+                .unwrap()
+                .to_str()
+                .unwrap(),
+        )
+        .unwrap();
+        let preimage = self
+            .pay_invoice(l402.clone().invoice.unwrap())
+            .await
+            .unwrap();
+        l402.set_preimage(preimage);
+        let request = add_l402_header(req_clone, l402);
+        self.client.execute(request).await
+    }
+
     pub async fn pay_invoice(&self, invoice: Bolt11Invoice) -> Result<String, Error> {
         let request = self
             .client
@@ -98,46 +126,18 @@ impl HttpClient for L402Client {
     }
 
     // Execute with L402 Handling
-    async fn execute(&self, request: Request) -> Result<Response, reqwest::Error> {
-        let mut request = request;
+    async fn execute(&self, mut request: Request) -> Result<Response, reqwest::Error> {
+        let req_clone = request.try_clone().unwrap();
         if self.l402_token.is_some() {
             request
                 .headers_mut()
                 .insert("AUTHORIZATION", self.get_auth_header());
-        } else {
-            let request_copy = request.try_clone().unwrap();
-            let response = self.client.execute(request).await?;
-            if response.status() == StatusCode::PAYMENT_REQUIRED {
-                info!("L402 Payment Required");
-                info!(
-                    "www-authenticate header: {:?}",
-                    response.headers().get("www-authenticate")
-                );
-            }
-
-            let mut l402 = parse_l402_header(
-                response
-                    .headers()
-                    .get("www-authenticate")
-                    .unwrap()
-                    .to_str()
-                    .unwrap(),
-            )
-            .unwrap();
-
-            let preimage = self
-                .pay_invoice(l402.clone().invoice.unwrap())
-                .await
-                .unwrap();
-
-            info!("Preimage: {}", preimage);
-
-            l402.set_preimage(preimage);
-
-            request = add_l402_header(request_copy, l402);
         }
-        println!("Request: {:?}", request);
-        let response = self.client.execute(request).await.unwrap();
+        let mut response = self.client.execute(request).await?;
+        if response.status() == StatusCode::PAYMENT_REQUIRED {
+            response = self.handle_l402(req_clone, response).await?;
+        }
+
         Ok(response)
     }
 
@@ -146,38 +146,9 @@ impl HttpClient for L402Client {
             request
                 .headers_mut()
                 .insert("AUTHORIZATION", self.get_auth_header());
-        } else {
-            let request_copy = request.try_clone().unwrap();
-            let response = self.client.execute(request).await.unwrap();
-            if response.status() == StatusCode::PAYMENT_REQUIRED {
-                info!("L402 Payment Required");
-                info!(
-                    "www-authenticate header: {:?}",
-                    response.headers().get("www-authenticate")
-                );
-            }
+        };
 
-            let mut l402 = parse_l402_header(
-                response
-                    .headers()
-                    .get("www-authenticate")
-                    .unwrap()
-                    .to_str()
-                    .unwrap(),
-            )
-            .unwrap();
-
-            let preimage = self
-                .pay_invoice(l402.clone().invoice.unwrap())
-                .await
-                .unwrap();
-
-            l402.set_preimage(preimage);
-
-            request = add_l402_header(request_copy, l402);
-        }
-
-        Box::pin(self.client.execute(request).await.unwrap().bytes_stream())
+        Box::pin(self.execute(request).await.unwrap().bytes_stream())
     }
 }
 
@@ -223,6 +194,14 @@ pub fn parse_l402_header(header: &str) -> Result<L402, Error> {
         invoice: Some(invoice),
         preimage: None,
     })
+}
+
+fn load_env_vars() -> (String, String, Option<String>) {
+    dotenv::dotenv().ok();
+    let bolt11_endpoint = std::env::var("LIGHTNING_API_ENDPOINT").unwrap();
+    let api_key = std::env::var("LIGHTNING_API_KEY").unwrap();
+    let l402_token = std::env::var("L402_TOKEN").ok();
+    (bolt11_endpoint, api_key, l402_token)
 }
 
 #[derive(Serialize)]
