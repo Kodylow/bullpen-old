@@ -4,8 +4,11 @@ use bytes::Bytes;
 use futures_util::Stream;
 use lightning_invoice::{Bolt11Invoice, SignedRawBolt11Invoice};
 use log::info;
-use reqwest::{header::HeaderValue, Client, Method, Request, RequestBuilder, Response, StatusCode};
+use reqwest::header::HeaderValue;
+use reqwest::{Client, Method, Request, RequestBuilder, Response, StatusCode};
 use serde::{Deserialize, Serialize};
+
+use super::{HttpClient, PinBoxStream};
 
 #[derive(Debug, Clone)]
 pub struct L402 {
@@ -58,22 +61,44 @@ impl L402Client {
         self.client.request(method, url)
     }
 
-    pub fn get(&self, url: &str) -> RequestBuilder {
-        self.request(Method::GET, url)
-    }
-
-    pub fn post(&self, url: &str) -> RequestBuilder {
-        self.request(Method::POST, url)
-    }
-
     pub fn get_auth_header(&self) -> HeaderValue {
         format!("L402 {}", self.l402_token.clone().unwrap())
             .parse()
             .unwrap()
     }
 
+    pub async fn pay_invoice(&self, invoice: Bolt11Invoice) -> Result<String, Error> {
+        let request = self
+            .client
+            .post(self.bolt11_endpoint.as_str())
+            .header("Authorization", self.get_auth_header())
+            .json(&AlbyBolt11Request {
+                invoice: invoice.to_string(),
+                amount: None,
+            })
+            .build()
+            .unwrap();
+
+        let response = self.client.execute(request).await.unwrap();
+
+        let response: AlbyBolt11Response = response.json().await.unwrap();
+
+        Ok(response.payment_preimage)
+    }
+}
+
+#[async_trait::async_trait(?Send)]
+impl HttpClient for L402Client {
+    fn get(&self, url: &str) -> RequestBuilder {
+        self.request(Method::GET, url)
+    }
+
+    fn post(&self, url: &str) -> RequestBuilder {
+        self.request(Method::POST, url)
+    }
+
     // Execute with L402 Handling
-    pub async fn execute(&self, request: Request) -> Result<Response, reqwest::Error> {
+    async fn execute(&self, request: Request) -> Result<Response, reqwest::Error> {
         let mut request = request;
         if self.l402_token.is_some() {
             request
@@ -116,10 +141,7 @@ impl L402Client {
         Ok(response)
     }
 
-    pub async fn execute_stream(
-        &self,
-        mut request: Request,
-    ) -> impl Stream<Item = Result<Bytes, reqwest::Error>> {
+    async fn execute_stream(&self, mut request: Request) -> PinBoxStream<Bytes> {
         if self.l402_token.is_some() {
             request
                 .headers_mut()
@@ -155,26 +177,7 @@ impl L402Client {
             request = add_l402_header(request_copy, l402);
         }
 
-        self.client.execute(request).await.unwrap().bytes_stream()
-    }
-
-    pub async fn pay_invoice(&self, invoice: Bolt11Invoice) -> Result<String, Error> {
-        info!("Paying invoice...");
-        let alby_request = AlbyBolt11Request {
-            invoice: invoice.to_string(),
-            amount: None,
-        };
-        let alby_res: Response = self
-            .post(&self.bolt11_endpoint)
-            .bearer_auth(&self.api_key)
-            .json(&alby_request)
-            .send()
-            .await
-            .unwrap();
-
-        let alby_res: AlbyBolt11Response =
-            serde_json::from_str(&alby_res.text().await.unwrap()).unwrap();
-        Ok(alby_res.payment_preimage)
+        Box::pin(self.client.execute(request).await.unwrap().bytes_stream())
     }
 }
 

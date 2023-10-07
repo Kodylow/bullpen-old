@@ -1,20 +1,16 @@
-use crate::error::ApiError;
-use crate::http::{HttpClient, L402Client, ReplitClient};
-use crate::token_manager::L402TokenManager;
-use crate::token_manager::ReplitIdentityTokenManager;
-use crate::token_manager::TokenManager;
+use std::env;
 
 use reqwest::header::HeaderMap;
+use reqwest::{Response, StatusCode};
 
-use reqwest::Response;
-use reqwest::StatusCode;
-
-use std::env;
+use crate::error::ApiError;
+use crate::http::{HttpClient, L402Client, ReplitClient};
+use crate::token_manager::{L402TokenManager, ReplitIdentityTokenManager, TokenManager};
 
 pub struct Model {
     pub server_url: String,
     pub auth: Box<dyn TokenManager>,
-    pub client: HttpClient,
+    pub client: Box<dyn HttpClient>,
 }
 
 pub trait ModelTrait {
@@ -38,15 +34,15 @@ impl Model {
         //     || env::var("REPL_ID").is_ok()
         // {
         //     Ok(Self {
-        //         server_url: server_url.map_or_else(|| config.root_url.clone(), ToString::to_string),
-        //         auth: Box::new(ReplitIdentityTokenManager),
-        //         client: HttpClient::ReqwestClient(ReplitClient::new()),
-        //     })
+        //         server_url: server_url.map_or_else(|| config.root_url.clone(),
+        // ToString::to_string),         auth:
+        // Box::new(ReplitIdentityTokenManager),         client:
+        // HttpClient::ReqwestClient(ReplitClient::new()),     })
         // } else {
         Ok(Self {
             server_url: server_url.map_or_else(|| config.matador_url.clone(), ToString::to_string),
             auth: Box::new(L402TokenManager),
-            client: HttpClient::L402Client(L402Client::new()), // Use L402Client
+            client: Box::new(L402Client::new()),
         })
         // }
     }
