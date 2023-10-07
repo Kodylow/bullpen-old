@@ -2,7 +2,7 @@ use crate::{
     error::ApiError,
     models::{
         base::Model,
-        embedding::{structs::EmbeddingModelResponse, EmbeddingModels},
+        embedding::{structs::EmbeddingModelResponse},
     },
 };
 

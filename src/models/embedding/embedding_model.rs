@@ -1,7 +1,7 @@
-use crate::{error::ApiError, models::base::Model};
+use crate::{error::ApiError};
 
-use serde_json::Value;
-use std::collections::HashMap;
+
+
 
 use super::{
     impls::replit_embedding_model::ReplitEmbeddingModel, structs::EmbeddingModelResponse,

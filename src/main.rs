@@ -3,9 +3,6 @@ use bullpen::models::{
         chat_model::ChatModelTrait, ChatExample, ChatMessage, ChatModel, ChatModels::ChatBison,
         ChatSession,
     },
-    completion::CompletionModels::TextBison,
-    embedding::EmbeddingModels::TextEmbeddingGecko,
-    CompletionModel, EmbeddingModel,
 };
 use futures_util::StreamExt;
 use log::info;

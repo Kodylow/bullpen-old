@@ -1,15 +1,8 @@
-use serde_json::Value;
-use std::collections::HashMap;
-
-use crate::{
-    error::ApiError,
-    models::base::{structs::PinBoxStream, Model},
-};
-
-use super::{
-    impls::replit_completion_model::ReplitCompletionModel, structs::CompletionModelResponse,
-    CompletionModels,
-};
+use super::impls::replit_completion_model::ReplitCompletionModel;
+use super::structs::CompletionModelResponse;
+use super::CompletionModels;
+use crate::error::ApiError;
+use crate::models::base::structs::PinBoxStream;
 
 pub struct CompletionModel {
     inner: Box<dyn CompletionModelTrait>,

@@ -1,13 +1,10 @@
-use serde_json::Value;
-use std::{collections::HashMap, pin::Pin};
+use std::pin::Pin;
 
-use crate::{error::ApiError, models::base::structs::PinBoxStream};
-
-use super::{
-    impls::{OpenAiChatModel, ReplitChatModel},
-    structs::{ChatModelResponse, ChatSession},
-    ChatModels,
-};
+use super::impls::{OpenAiChatModel, ReplitChatModel};
+use super::structs::{ChatModelResponse, ChatSession};
+use super::ChatModels;
+use crate::error::ApiError;
+use crate::models::base::structs::PinBoxStream;
 
 pub struct ChatModel {
     inner: Box<dyn ChatModelTrait>,

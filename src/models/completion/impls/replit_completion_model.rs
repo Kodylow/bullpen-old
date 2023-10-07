@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use futures_util::stream::{self, StreamExt};
+use futures_util::stream::{StreamExt};
 use serde_json::Value;
 
 use crate::{

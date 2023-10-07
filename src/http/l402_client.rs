@@ -1,7 +1,6 @@
 use std::io::Error;
 
 use bytes::Bytes;
-use futures_util::Stream;
 use lightning_invoice::{Bolt11Invoice, SignedRawBolt11Invoice};
 use log::info;
 use reqwest::header::HeaderValue;
@@ -41,9 +40,7 @@ pub struct L402Client {
 
 impl L402Client {
     pub fn new() -> Self {
-        dotenv::dotenv().ok();
-        let l402_token = std::env::var("L402_TOKEN").ok();
-        info!("Found l402_token: {:?}", l402_token);
+        let (bolt11_endpoint, api_key, l402_token) = load_env_vars();
         // let client = ClientBuilder::new()
         //     .connection_verbose(true)
         //     .build()
@@ -51,9 +48,9 @@ impl L402Client {
         let client = Client::new();
         Self {
             client: client,
-            bolt11_endpoint: std::env::var("LIGHTNING_API_ENDPOINT").unwrap(),
-            api_key: std::env::var("LIGHTNING_API_KEY").unwrap(),
-            l402_token: l402_token,
+            bolt11_endpoint,
+            api_key,
+            l402_token,
         }
     }
 

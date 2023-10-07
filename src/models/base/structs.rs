@@ -2,7 +2,7 @@ use std::pin::Pin;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{error::ApiError, models::chat::structs::ChatModelResponse};
+use crate::{error::ApiError};
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]

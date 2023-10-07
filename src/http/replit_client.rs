@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use futures_util::Stream;
+
 use reqwest::{Client, Method, Request, RequestBuilder, Response};
 
 use super::{HttpClient, PinBoxStream};

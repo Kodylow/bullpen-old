@@ -1,10 +1,10 @@
 use std::pin::Pin;
 
 use bytes::Bytes;
-use futures_util::{Stream, StreamExt};
+
 use reqwest::{Request, Response};
 
-use super::{L402Client, ReplitClient};
+
 
 pub type PinBoxStream<T> =
     Pin<Box<dyn futures_util::stream::Stream<Item = Result<T, reqwest::Error>>>>;
