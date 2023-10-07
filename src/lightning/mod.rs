@@ -49,20 +49,8 @@ impl fmt::Display for LightningType {
 
 #[async_trait]
 pub trait Lightning: Send + Sync {
-    async fn is_invoice_paid(&self, invoice: String) -> Result<bool, anyhow::Error>;
-    async fn create_invoice(&self, amount: u64) -> Result<CreateInvoiceResult, anyhow::Error>;
     async fn pay_invoice(&self, payment_request: String)
         -> Result<PayInvoiceResult, anyhow::Error>;
-
-    async fn decode_invoice(&self, payment_request: String) -> Result<LNInvoice, anyhow::Error> {
-        LNInvoice::from_str(&payment_request).map_err(|err| {
-            anyhow::anyhow!(
-                "Failed to decode invoice: {}, error: {}",
-                payment_request,
-                err
-            )
-        })
-    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
@@ -107,28 +95,6 @@ impl LnbitsLightning {
 
 #[async_trait]
 impl Lightning for LnbitsLightning {
-    async fn is_invoice_paid(&self, invoice: String) -> Result<bool, anyhow::Error> {
-        let decoded_invoice = self.decode_invoice(invoice).await?;
-        Ok(self
-            .client
-            .is_invoice_paid(&decoded_invoice.payment_hash().to_string())
-            .await?)
-    }
-
-    async fn create_invoice(&self, amount: u64) -> Result<CreateInvoiceResult, anyhow::Error> {
-        Ok(self
-            .client
-            .create_invoice(&CreateInvoiceParams {
-                amount,
-                unit: "sat".to_string(),
-                memo: None,
-                expiry: Some(10000),
-                webhook: None,
-                internal: None,
-            })
-            .await?)
-    }
-
     async fn pay_invoice(
         &self,
         payment_request: String,
@@ -173,28 +139,6 @@ impl AlbyLightning {
 }
 #[async_trait]
 impl Lightning for AlbyLightning {
-    async fn is_invoice_paid(&self, invoice: String) -> Result<bool, anyhow::Error> {
-        let decoded_invoice = self.decode_invoice(invoice).await?;
-        Ok(self
-            .client
-            .is_invoice_paid(&decoded_invoice.payment_hash().to_string())
-            .await?)
-    }
-
-    async fn create_invoice(&self, amount: u64) -> Result<CreateInvoiceResult, anyhow::Error> {
-        Ok(self
-            .client
-            .create_invoice(&CreateInvoiceParams {
-                amount,
-                unit: "sat".to_string(),
-                memo: None,
-                expiry: Some(10000),
-                webhook: None,
-                internal: None,
-            })
-            .await?)
-    }
-
     async fn pay_invoice(
         &self,
         payment_request: String,
@@ -240,47 +184,6 @@ impl StrikeLightning {
 
 #[async_trait]
 impl Lightning for StrikeLightning {
-    async fn is_invoice_paid(&self, invoice: String) -> Result<bool, anyhow::Error> {
-        let decoded_invoice = self.decode_invoice(invoice).await?;
-        let description_hash = decoded_invoice
-            .into_signed_raw()
-            .description_hash()
-            .unwrap()
-            .0;
-
-        // invoiceId is the last 16 bytes of the description hash
-        let invoice_id = format_as_uuid_string(&description_hash[16..]);
-
-        Ok(self.client.is_invoice_paid(&invoice_id).await?)
-    }
-
-    async fn create_invoice(&self, amount: u64) -> Result<CreateInvoiceResult, anyhow::Error> {
-        let strike_invoice_id = self
-            .client
-            .create_strike_invoice(&CreateInvoiceParams {
-                amount,
-                unit: "sat".to_string(),
-                memo: None,
-                expiry: Some(10000),
-                webhook: None,
-                internal: None,
-            })
-            .await?;
-
-        let payment_request = self.client.create_strike_quote(&strike_invoice_id).await?;
-        // strike doesn't return the payment_hash so we have to read the invoice into a
-        // Bolt11 and extract it
-        let invoice =
-            LNInvoice::from_signed(payment_request.parse::<SignedRawBolt11Invoice>().unwrap())
-                .unwrap();
-        let payment_hash = invoice.payment_hash().to_vec();
-
-        Ok(CreateInvoiceResult {
-            payment_hash,
-            payment_request,
-        })
-    }
-
     async fn pay_invoice(
         &self,
         payment_request: String,
@@ -396,47 +299,6 @@ impl LndLightning {
 
 #[async_trait]
 impl Lightning for LndLightning {
-    async fn is_invoice_paid(&self, payment_request: String) -> Result<bool, anyhow::Error> {
-        let invoice = self.decode_invoice(payment_request).await?;
-        let payment_hash = invoice.payment_hash();
-        let invoice_request = tonic_lnd::lnrpc::PaymentHash {
-            r_hash: payment_hash.to_vec(),
-            ..Default::default()
-        };
-
-        let invoice = self
-            .client_lock()
-            .await
-            .expect("failed to lock client")
-            .lookup_invoice(tonic_lnd::tonic::Request::new(invoice_request))
-            .await
-            .expect("failed to lookup invoice")
-            .into_inner();
-
-        Ok(invoice.state == tonic_lnd::lnrpc::invoice::InvoiceState::Settled as i32)
-    }
-
-    async fn create_invoice(&self, amount: u64) -> Result<CreateInvoiceResult, anyhow::Error> {
-        let invoice_request = tonic_lnd::lnrpc::Invoice {
-            value: amount as i64,
-            ..Default::default()
-        };
-
-        let invoice = self
-            .client_lock()
-            .await
-            .expect("failed to lock client")
-            .add_invoice(tonic_lnd::tonic::Request::new(invoice_request))
-            .await
-            .expect("failed to create invoice")
-            .into_inner();
-
-        Ok(CreateInvoiceResult {
-            payment_hash: invoice.r_hash,
-            payment_request: invoice.payment_request,
-        })
-    }
-
     async fn pay_invoice(
         &self,
         payment_request: String,
@@ -493,54 +355,6 @@ impl ClnLightning {
 
 #[async_trait]
 impl Lightning for ClnLightning {
-    async fn is_invoice_paid(&self, payment_request: String) -> Result<bool, anyhow::Error> {
-        let invoices = self
-            .client_lock()
-            .await
-            .expect("failed to lock client")
-            .call_typed(cln_rpc::model::requests::ListinvoicesRequest {
-                invstring: Some(payment_request),
-                label: None,
-                payment_hash: None,
-                offer_id: None,
-                index: None,
-                start: None,
-                limit: None,
-            })
-            .await
-            .expect("failed to lookup invoice");
-        let invoice = invoices
-            .invoices
-            .first()
-            .expect("no matching invoice found");
-
-        Ok(invoice.status == cln_rpc::model::responses::ListinvoicesInvoicesStatus::PAID)
-    }
-
-    async fn create_invoice(&self, amount: u64) -> Result<CreateInvoiceResult, anyhow::Error> {
-        let invoice = self
-            .client_lock()
-            .await
-            .expect("failed to lock client")
-            .call_typed(cln_rpc::model::requests::InvoiceRequest {
-                amount_msat: AmountOrAny::Amount(Amount::from_sat(amount)),
-                description: format!("{:x}", rand::random::<u128>()),
-                label: format!("{:x}", rand::random::<u128>()),
-                expiry: None,
-                fallbacks: None,
-                preimage: None,
-                cltv: None,
-                deschashonly: None,
-            })
-            .await
-            .expect("failed to create invoice");
-
-        Ok(CreateInvoiceResult {
-            payment_hash: invoice.payment_hash.to_byte_array(),
-            payment_request: invoice.bolt11,
-        })
-    }
-
     async fn pay_invoice(
         &self,
         payment_request: String,
@@ -569,39 +383,5 @@ impl Lightning for ClnLightning {
         Ok(PayInvoiceResult {
             payment_hash: hex::encode(payment.payment_hash),
         })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::lightning::{Lightning, LnbitsLightning};
-
-    #[tokio::test]
-    async fn test_decode_invoice() -> anyhow::Result<()> {
-        let invoice = "lnbcrt55550n1pjga687pp5ac8ja6n5hn90huztxxp746w48vtj8ys5uvze6749dvcsd5j5sdvsdqqcqzzsxqyz5vqsp5kzzq0ycxspxjygsxkfkexkkejjr5ggeyl56mwa7s0ygk2q8z92ns9qyyssqt7myq7sryffasx8v47al053ut4vqts32e9hvedvs7eml5h9vdrtj3k5m72yex5jv355jpuzk2xjjn5468cz87nhp50jyr2al2a5zjvgq2xs5uq".to_string();
-
-        let lightning =
-            LnbitsLightning::new("admin_key".to_string(), "http://localhost:5000".to_string());
-
-        let decoded_invoice = lightning.decode_invoice(invoice).await?;
-        assert_eq!(
-            decoded_invoice
-                .amount_milli_satoshis()
-                .expect("invalid amount"),
-            5_555 * 1_000
-        );
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_decode_invoice_invalid() -> anyhow::Result<()> {
-        let invoice = "lnbcrt55550n1pjga689pp5ac8ja6n5hn90huztyxp746w48vtj8ys5uvze6749dvcsd5j5sdvsdqqcqzzsxqyz5vqsp5kzzq0ycxspxjygsxkfkexkkejjr5ggeyl56mwa7s0ygk2q8z92ns9qyyssqt7myq7sryffasx8v47al053ut4vqts32e9hvedvs7eml5h9vdrtj3k5m72yex5jv355jpuzk2xjjn5468cz87nhp50jyr2al2a5zjvgq2xs5uw".to_string();
-
-        let lightning =
-            LnbitsLightning::new("admin_key".to_string(), "http://localhost:5000".to_string());
-
-        let decoded_invoice = lightning.decode_invoice(invoice).await;
-        assert!(decoded_invoice.is_err());
-        Ok(())
     }
 }
