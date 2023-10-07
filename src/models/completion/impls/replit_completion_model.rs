@@ -1,15 +1,13 @@
 use std::collections::HashMap;
 
-use futures_util::stream::{StreamExt};
+use futures_util::stream::StreamExt;
 use serde_json::Value;
 
-use crate::{
-    error::ApiError,
-    models::{
-        base::{structs::PinBoxStream, Model},
-        completion::{completion_model::CompletionModelTrait, structs::CompletionModelResponse},
-    },
-};
+use crate::error::ApiError;
+use crate::models::base::structs::PinBoxStream;
+use crate::models::base::Model;
+use crate::models::completion::completion_model::CompletionModelTrait;
+use crate::models::completion::structs::CompletionModelResponse;
 
 pub struct ReplitCompletionModel {
     base: Model,
