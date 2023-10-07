@@ -33,7 +33,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             },
         }],
         messages: vec![ChatMessage {
-            content: "What is Replit?".to_string(),
+            content: "How do I write a nix flake for a rust project?".to_string(),
             author: "USER".to_string(),
         }],
     };
