@@ -1,4 +1,4 @@
-use reqwest::header::CONTENT_TYPE;
+use reqwest::header::{HeaderValue, CONTENT_TYPE};
 use url::Url;
 
 use super::error::LightningError;

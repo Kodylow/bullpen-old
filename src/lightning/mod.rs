@@ -4,7 +4,6 @@ use async_trait::async_trait;
 use cln_rpc::primitives::{Amount, AmountOrAny};
 use cln_rpc::ClnRpc;
 use lightning_invoice::{Bolt11Invoice as LNInvoice, SignedRawBolt11Invoice};
-use secp256k1::bitcoin_hashes::Hash;
 use secp256k1::rand;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use tokio::sync::{MappedMutexGuard, Mutex, MutexGuard};
@@ -15,6 +14,7 @@ pub mod error;
 mod lnbits;
 mod model;
 mod strike;
+pub mod utils;
 
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -25,6 +25,7 @@ use self::error::LightningError;
 use self::lnbits::LNBitsClient;
 use self::model::{CreateInvoiceParams, CreateInvoiceResult, PayInvoiceResult};
 use self::strike::StrikeClient;
+use self::utils::decode_invoice;
 
 #[derive(Debug, Clone)]
 pub enum LightningType {
@@ -190,7 +191,7 @@ impl Lightning for StrikeLightning {
     ) -> Result<PayInvoiceResult, anyhow::Error> {
         // strike doesn't return the payment_hash so we have to read the invoice into a
         // Bolt11 and extract it
-        let invoice = self.decode_invoice(payment_request.clone()).await?;
+        let invoice = decode_invoice(payment_request.clone());
         let payment_hash = invoice.payment_hash().to_vec();
 
         let payment_quote_id = self

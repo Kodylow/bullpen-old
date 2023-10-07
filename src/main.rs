@@ -9,10 +9,10 @@ use log::info;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     env_logger::Builder::from_default_env()
-        .filter_level(log::LevelFilter::Trace)
+        .filter_level(log::LevelFilter::Debug)
         .init();
 
-    log::trace!("Trace logging is enabled");
+    log::debug!("Debug logging is enabled");
     // -- Chat Model --
     let chat_model = ChatModel::new(ChatBison, None)?;
     let chat_session = ChatSession {
