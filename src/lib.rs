@@ -4,6 +4,7 @@
 mod config;
 pub mod error;
 pub mod http;
+pub mod lightning;
 pub mod models;
 pub mod token_manager;
 

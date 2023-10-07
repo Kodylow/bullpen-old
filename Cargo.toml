@@ -10,20 +10,27 @@ name = "bullpen"
 path = "src/lib.rs"
 
 [dependencies]
+anyhow = "1.0.75"
 async-trait = "0.1.73"
 bytes = "1.5.0"
 bytes-stream = "0.0.3"
+cln-rpc = "0.1.6"
 dotenv = "0.15.0"
 env_logger = "0.10.0"
 futures-util = "0.3.28"
-lightning-invoice = "0.24.0"
+hex = "0.4.3"
+lightning-invoice = "0.25.0"
 log = "0.4.20"
 once_cell = "1.18.0"
 reqwest = { version = "0.11.22", features = ["json", "stream"] }
 reqwest-streams = { version = "0.3.0", features = ["json"] }
+secp256k1 = { version = "0.27.0", features = ["rand, bitcoin_hashes"] }
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
+sha2 = "0.10.8"
+thiserror = "1.0.49"
 tokio = { version = "1.32.0", features = ["full"] }
 tokio-stream = "0.1.14"
+tonic_lnd = "0.5.1"
 tracing = "0.1.37"
 url = "2.4.1"
