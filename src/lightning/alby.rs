@@ -119,9 +119,7 @@ impl AlbyClient {
     }
 
     pub async fn is_invoice_paid(&self, payment_hash: &str) -> Result<bool, LightningError> {
-        info!("KODY checking if invoice is paid: {}", payment_hash);
         let body = self.make_get(&format!("invoices/{payment_hash}")).await?;
-        info!("KODY body: {}", body);
         Ok(serde_json::from_str::<serde_json::Value>(&body)?["settled"]
             .as_bool()
             .unwrap_or(false))
