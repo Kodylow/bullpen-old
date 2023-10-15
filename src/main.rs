@@ -3,6 +3,11 @@ use std::error::Error;
 use bullpen::models::chat::chat_model::ChatModelTrait;
 use bullpen::models::chat::ChatModels::ChatBison;
 use bullpen::models::chat::{ChatExample, ChatMessage, ChatModel, ChatSession};
+use bullpen::models::completion::completion_model::CompletionModelTrait;
+use bullpen::models::completion::CompletionModels::TextBison;
+use bullpen::models::embedding::embedding_model::EmbeddingModelTrait;
+use bullpen::models::embedding::EmbeddingModels::TextEmbeddingGecko;
+use bullpen::models::{CompletionModel, EmbeddingModel};
 use futures_util::StreamExt;
 use log::info;
 
@@ -38,30 +43,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     while let Some(chat_response) = chat_stream.next().await {
         info!("Model Response: {:?}", chat_response);
     }
-
-    // // -- Embedding Model --
-    // let embedding_model = EmbeddingModel::new(TextEmbeddingGecko, None)?;
-
-    // let embeddings_content = vec![
-    //     "Hello world!".to_string(),
-    //     "Replit Modelfarm in Rust!".to_string(),
-    // ];
-
-    // let embeddings = embedding_model.embed(embeddings_content).await?;
-
-    // println!("Embeddings: {:?}", embeddings);
-
-    // // -- Completion Model --
-    // let completion_model = CompletionModel::new(TextBison, None)?;
-
-    // let prompts = vec!["Hello world!".to_string()];
-
-    // let mut completion_stream = completion_model.stream_complete(prompts, 10,
-    // 0.5).await?;
-
-    // while let Some(completion_response) = completion_stream.next().await {
-    //     println!("Model Response: {:?}", completion_response);
-    // }
 
     Ok(())
 }
