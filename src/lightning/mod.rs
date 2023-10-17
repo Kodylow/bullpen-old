@@ -1,10 +1,6 @@
 use std::fmt::{self, Formatter};
 
 use async_trait::async_trait;
-
-use cln_rpc::ClnRpc;
-
-
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use tokio::sync::{MappedMutexGuard, Mutex, MutexGuard};
 use tonic_lnd::Client;
@@ -17,13 +13,11 @@ mod strike;
 pub mod utils;
 
 use std::path::PathBuf;
-
 use std::sync::Arc;
 
 use self::alby::AlbyClient;
-
 use self::lnbits::LNBitsClient;
-use self::model::{PayInvoiceResult};
+use self::model::PayInvoiceResult;
 use self::strike::StrikeClient;
 use self::utils::decode_invoice;
 
@@ -334,54 +328,5 @@ impl fmt::Display for ClnLightningSettings {
             "rpc_path: {}",
             self.rpc_path.as_ref().unwrap().to_str().unwrap_or_default()
         )
-    }
-}
-
-pub struct ClnLightning(Arc<Mutex<ClnRpc>>);
-
-impl ClnLightning {
-    pub async fn new(path: &PathBuf) -> Result<Self, anyhow::Error> {
-        let client = ClnRpc::new(path)
-            .await
-            .map_err(|err| anyhow::anyhow!("Failed to create client: {}", err))?;
-
-        Ok(Self(Arc::new(Mutex::new(client))))
-    }
-
-    pub async fn client_lock(&self) -> anyhow::Result<MappedMutexGuard<'_, ClnRpc>> {
-        let guard = self.0.lock().await;
-        Ok(MutexGuard::map(guard, |client| client))
-    }
-}
-
-#[async_trait]
-impl Lightning for ClnLightning {
-    async fn pay_invoice(
-        &self,
-        payment_request: String,
-    ) -> Result<PayInvoiceResult, anyhow::Error> {
-        let payment = self
-            .client_lock()
-            .await?
-            .call_typed(cln_rpc::model::requests::PayRequest {
-                bolt11: payment_request,
-                amount_msat: None,
-                label: None,
-                riskfactor: None,
-                maxfeepercent: None,
-                retry_for: None,
-                maxdelay: None,
-                exemptfee: None,
-                localinvreqid: None,
-                exclude: None,
-                maxfee: None,
-                description: None,
-            })
-            .await
-            .map_err(|err| anyhow::anyhow!("Failed to pay invoice: {}", err))?;
-
-        Ok(PayInvoiceResult {
-            payment_hash: hex::encode(payment.payment_hash),
-        })
     }
 }

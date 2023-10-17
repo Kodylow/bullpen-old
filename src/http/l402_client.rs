@@ -108,6 +108,8 @@ impl L402Client {
 
         let response = self.client.execute(request).await.unwrap();
 
+        info!("Response: {:?}", response);
+
         let response: AlbyBolt11Response = response.json().await.unwrap();
 
         info!("Payment Preimage: {}", response.payment_preimage);

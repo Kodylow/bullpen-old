@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::models::base::structs::Metadata;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(untagged)]
 pub enum Role {
     System,
     User,
@@ -14,7 +15,7 @@ pub enum Role {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ChatMessage {
     pub content: String,
-    pub author: Role,
+    pub author: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
