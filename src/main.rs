@@ -33,15 +33,27 @@ async fn main() -> Result<(), Box<dyn Error>> {
             },
         }],
         messages: vec![ChatMessage {
-            content: "How do I write a nix flake for a rust project?".to_string(),
+            content: "How do I write a nix flake for a rust
+    project?"
+                .to_string(),
             author: "USER".to_string(),
         }],
     };
 
-    let mut chat_stream = chat_model.stream_chat(vec![chat_session], 2000, 0.5).await;
+    // let mut chat_stream = chat_model.stream_chat(vec![chat_session], 2000,
+    // 0.5).await;
 
-    while let Some(chat_response) = chat_stream.next().await {
-        info!("Model Response: {:?}", chat_response);
+    // while let Some(chat_response) = chat_stream.next().await {
+    //     info!("Model Response: {:?}", chat_response);
+    // }
+
+    // -- Completion Model --
+    let completion_model = CompletionModel::new(TextBison, None)?;
+    let prompts = vec!["def add(a, b):".to_string()];
+    let mut completion_stream = completion_model.stream_complete(prompts, 100, 0.5).await;
+
+    while let Some(completion_response) = completion_stream.next().await {
+        info!("Model Response: {:?}", completion_response);
     }
 
     Ok(())

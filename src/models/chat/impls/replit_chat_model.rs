@@ -1,19 +1,12 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
-use futures_util::stream::{StreamExt};
-
+use futures_util::stream::StreamExt;
 use serde_json::Value;
 
-use crate::{
-    error::ApiError,
-    models::{
-        base::{structs::PinBoxStream, Model},
-        chat::{
-            chat_model::ChatModelTrait,
-            structs::{ChatModelResponse, ChatSession},
-        },
-    },
-};
+use crate::models::base::structs::PinBoxStream;
+use crate::models::base::Model;
+use crate::models::chat::chat_model::ChatModelTrait;
+use crate::models::chat::structs::{ChatModelResponse, ChatSession};
 
 pub struct ReplitChatModel {
     base: Model,
@@ -27,7 +20,7 @@ impl ChatModelTrait for ReplitChatModel {
         prompts: Vec<ChatSession>,
         max_output_tokens: i32,
         temperature: f32,
-    ) -> Result<ChatModelResponse, ApiError> {
+    ) -> Result<ChatModelResponse, anyhow::Error> {
         let payload = self.build_request_payload(&prompts, max_output_tokens, temperature);
 
         let req = self
@@ -77,7 +70,7 @@ impl ChatModelTrait for ReplitChatModel {
 }
 
 impl ReplitChatModel {
-    pub fn new(model_name: &str, server_url: Option<&str>) -> Result<Self, ApiError> {
+    pub fn new(model_name: &str, server_url: Option<&str>) -> Result<Self, anyhow::Error> {
         let base = Model::new(server_url)?;
         let model_name = model_name.to_string();
         Ok(ReplitChatModel { base, model_name })

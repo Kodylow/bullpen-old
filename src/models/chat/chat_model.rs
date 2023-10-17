@@ -3,7 +3,6 @@ use std::pin::Pin;
 use super::impls::{OpenAiChatModel, ReplitChatModel};
 use super::structs::{ChatModelResponse, ChatSession};
 use super::ChatModels;
-use crate::error::ApiError;
 use crate::models::base::structs::PinBoxStream;
 
 pub struct ChatModel {
@@ -11,7 +10,7 @@ pub struct ChatModel {
 }
 
 impl ChatModel {
-    pub fn new(model_name: ChatModels, server_url: Option<&str>) -> Result<Self, ApiError> {
+    pub fn new(model_name: ChatModels, server_url: Option<&str>) -> Result<Self, anyhow::Error> {
         match model_name {
             ChatModels::ChatBison => Ok(Self {
                 inner: Box::new(ReplitChatModel::new(model_name.as_str(), server_url)?),
@@ -33,13 +32,13 @@ pub trait ChatModelTrait {
         prompts: Vec<ChatSession>,
         max_output_tokens: i32,
         temperature: f32,
-    ) -> Result<ChatModelResponse, ApiError>;
+    ) -> Result<ChatModelResponse, anyhow::Error>;
     async fn stream_chat(
         &self,
         prompts: Vec<ChatSession>,
         max_output_tokens: i32,
         temperature: f32,
-    ) -> Pin<Box<dyn futures_util::stream::Stream<Item = Result<ChatModelResponse, ApiError>>>>;
+    ) -> Pin<Box<dyn futures_util::stream::Stream<Item = Result<ChatModelResponse, anyhow::Error>>>>;
 }
 
 #[async_trait::async_trait(?Send)]
@@ -49,7 +48,7 @@ impl ChatModelTrait for ChatModel {
         prompts: Vec<ChatSession>,
         max_output_tokens: i32,
         temperature: f32,
-    ) -> Result<ChatModelResponse, ApiError> {
+    ) -> Result<ChatModelResponse, anyhow::Error> {
         self.inner
             .chat(prompts, max_output_tokens, temperature)
             .await

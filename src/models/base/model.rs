@@ -1,9 +1,8 @@
-use std::env;
-
+use anyhow::anyhow;
 use reqwest::header::HeaderMap;
 use reqwest::{Response, StatusCode};
+use std::env;
 
-use crate::error::ApiError;
 use crate::http::{HttpClient, L402Client, ReplitClient};
 use crate::token_manager::{L402TokenManager, ReplitIdentityTokenManager, TokenManager};
 
@@ -14,19 +13,19 @@ pub struct Model {
 }
 
 pub trait ModelTrait {
-    fn new(server_url: Option<&str>) -> Result<Self, ApiError>
+    fn new(server_url: Option<&str>) -> Result<Self, anyhow::Error>
     where
         Self: Sized;
 
-    fn check_response(&self, response: &Response) -> Result<(), ApiError>;
+    fn check_response(&self, response: &Response) -> Result<(), anyhow::Error>;
 
     fn get_auth_headers(&self) -> HeaderMap;
 
-    fn check_streaming_response(&self, response: &Response) -> Result<(), ApiError>;
+    fn check_streaming_response(&self, response: &Response) -> Result<(), anyhow::Error>;
 }
 
 impl Model {
-    pub fn new(server_url: Option<&str>) -> Result<Self, ApiError> {
+    pub fn new(server_url: Option<&str>) -> Result<Self, anyhow::Error> {
         let config = crate::config::get_config();
         if env::var("REPLIT_DEPLOYMENT").is_ok()
             || env::var("REPL_IDENTITY_KEY").is_ok()
@@ -48,18 +47,15 @@ impl Model {
         }
     }
 
-    pub fn check_response(&self, response: &Response) -> Result<(), ApiError> {
+    pub fn check_response(&self, response: &Response) -> Result<(), anyhow::Error> {
         let status = response.status();
 
         if status == StatusCode::BAD_REQUEST {
-            return Err(ApiError::InvalidRequest("Invalid request".to_string()));
+            return Err(anyhow!("Invalid request"));
         }
 
         if status != StatusCode::OK {
-            return Err(ApiError::InvalidRequest(format!(
-                "Invalid status code: {}",
-                status
-            )));
+            return Err(anyhow!("Invalid response"));
         }
 
         Ok(())
@@ -76,7 +72,7 @@ impl Model {
         headers
     }
 
-    pub async fn check_streaming_response(&self, response: &Response) -> Result<(), ApiError> {
+    pub async fn check_streaming_response(&self, response: &Response) -> Result<(), anyhow::Error> {
         let status = response.status();
         if status == StatusCode::OK {
             return Ok(());

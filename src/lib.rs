@@ -2,7 +2,6 @@
 #![feature(async_fn_in_trait)]
 #![feature(type_alias_impl_trait)]
 mod config;
-pub mod error;
 pub mod http;
 pub mod lightning;
 pub mod models;

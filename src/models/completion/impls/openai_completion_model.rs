@@ -9,16 +9,16 @@ use crate::models::base::Model;
 use crate::models::completion::completion_model::CompletionModelTrait;
 use crate::models::completion::structs::CompletionModelResponse;
 
-pub struct ReplitCompletionModel {
+pub struct OpenAICompletionModel {
     base: Model,
     model_name: String,
 }
 
-impl ReplitCompletionModel {
+impl OpenAICompletionModel {
     pub fn new(model_name: &str, server_url: Option<&str>) -> Result<Self, anyhow::Error> {
         let base = Model::new(server_url)?;
         let model_name = model_name.to_string();
-        Ok(ReplitCompletionModel { base, model_name })
+        Ok(OpenAICompletionModel { base, model_name })
     }
 
     pub fn build_request_payload(
@@ -45,7 +45,7 @@ impl ReplitCompletionModel {
 }
 
 #[async_trait::async_trait(?Send)]
-impl CompletionModelTrait for ReplitCompletionModel {
+impl CompletionModelTrait for OpenAICompletionModel {
     async fn complete(
         &self,
         prompts: Vec<String>,

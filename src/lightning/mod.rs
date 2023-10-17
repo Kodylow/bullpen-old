@@ -341,11 +341,11 @@ pub struct ClnLightning(Arc<Mutex<ClnRpc>>);
 
 impl ClnLightning {
     pub async fn new(path: &PathBuf) -> Result<Self, anyhow::Error> {
-        let client = ClnRpc::new(path).await;
+        let client = ClnRpc::new(path)
+            .await
+            .map_err(|err| anyhow::anyhow!("Failed to create client: {}", err))?;
 
-        Ok(Self(Arc::new(Mutex::new(
-            client.expect("failed to create client"),
-        ))))
+        Ok(Self(Arc::new(Mutex::new(client))))
     }
 
     pub async fn client_lock(&self) -> anyhow::Result<MappedMutexGuard<'_, ClnRpc>> {
@@ -362,8 +362,7 @@ impl Lightning for ClnLightning {
     ) -> Result<PayInvoiceResult, anyhow::Error> {
         let payment = self
             .client_lock()
-            .await
-            .expect("failed to lock client") //FIXME map error
+            .await?
             .call_typed(cln_rpc::model::requests::PayRequest {
                 bolt11: payment_request,
                 amount_msat: None,
@@ -379,7 +378,7 @@ impl Lightning for ClnLightning {
                 description: None,
             })
             .await
-            .expect("failed to pay invoice");
+            .map_err(|err| anyhow::anyhow!("Failed to pay invoice: {}", err))?;
 
         Ok(PayInvoiceResult {
             payment_hash: hex::encode(payment.payment_hash),

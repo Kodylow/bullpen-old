@@ -1,19 +1,13 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
-use futures_util::stream::{StreamExt};
-
+use futures_util::stream::{self, StreamExt};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{
-    error::ApiError,
-    models::{
-        base::{structs::PinBoxStream, Model},
-        chat::{
-            chat_model::ChatModelTrait,
-            structs::{ChatModelResponse, ChatSession},
-        },
-    },
-};
+use crate::models::base::structs::PinBoxStream;
+use crate::models::base::Model;
+use crate::models::chat::chat_model::ChatModelTrait;
+use crate::models::chat::structs::{ChatModelRequest, ChatModelResponse, ChatSession, Role};
 
 pub struct OpenAiChatModel {
     base: Model,
@@ -21,7 +15,7 @@ pub struct OpenAiChatModel {
 }
 
 impl OpenAiChatModel {
-    pub fn new(model_name: &str, server_url: Option<&str>) -> Result<Self, ApiError> {
+    pub fn new(model_name: &str, server_url: Option<&str>) -> Result<Self, anyhow::Error> {
         let base = Model::new(server_url)?;
         let model_name = model_name.to_string();
         Ok(OpenAiChatModel { base, model_name })
@@ -32,28 +26,37 @@ impl OpenAiChatModel {
         prompts: &[ChatSession],
         max_output_tokens: i32,
         temperature: f32,
-    ) -> HashMap<String, Value> {
-        let mut payload = HashMap::new();
-        payload.insert("model".to_string(), self.model_name.clone().into());
+    ) -> Result<OpenAIChatCompletionParameters, anyhow::Error> {
+        let mut messages = vec![];
+        for prompt in prompts {
+            // Convert ChatExample into OpenAIChatMessage
+            for example in &prompt.examples {
+                messages.push(OpenAIChatMessage {
+                    role: Role::User, // Input is always from User
+                    content: example.input.content.clone(),
+                });
+                messages.push(OpenAIChatMessage {
+                    role: Role::Assistant, // Output is always from Assistant
+                    content: example.output.content.clone(),
+                });
+            }
+            // Convert ChatMessage into OpenAIChatMessage
+            for message in &prompt.messages {
+                messages.push(OpenAIChatMessage {
+                    role: message.author.clone(),
+                    content: message.content.clone(),
+                });
+            }
+        }
 
-        let mut parameters: HashMap<String, serde_json::Value> = HashMap::new();
-        parameters.insert(
-            "prompts".to_string(),
-            prompts
-                .iter()
-                .map(|p| p.model_dump().clone())
-                .collect::<Vec<_>>()
-                .into(),
-        );
-        parameters.insert("temperature".to_string(), temperature.into());
-        parameters.insert("maxOutputTokens".to_string(), max_output_tokens.into());
+        let parameters = OpenAIChatCompletionParameters {
+            model: self.model_name.clone(),
+            messages,
+            temperature,
+            max_tokens: Some(max_output_tokens as u32),
+        };
 
-        payload.insert(
-            "parameters".to_string(),
-            serde_json::to_value(parameters).unwrap(),
-        );
-
-        payload
+        Ok(parameters)
     }
 }
 
@@ -64,8 +67,8 @@ impl ChatModelTrait for OpenAiChatModel {
         prompts: Vec<ChatSession>,
         max_output_tokens: i32,
         temperature: f32,
-    ) -> Result<ChatModelResponse, ApiError> {
-        let payload = self.build_request_payload(&prompts, max_output_tokens, temperature);
+    ) -> Result<ChatModelResponse, anyhow::Error> {
+        let payload = self.build_request_payload(&prompts, max_output_tokens, temperature)?;
 
         let req = self
             .base
@@ -90,7 +93,16 @@ impl ChatModelTrait for OpenAiChatModel {
         max_output_tokens: i32,
         temperature: f32,
     ) -> PinBoxStream<ChatModelResponse> {
-        let payload = self.build_request_payload(&prompts, max_output_tokens, temperature);
+        let payload_result = self.build_request_payload(&prompts, max_output_tokens, temperature);
+
+        let payload = match payload_result {
+            Ok(p) => p,
+            Err(e) => {
+                return Box::pin(stream::once(async move {
+                    Err(anyhow::anyhow!("Failed to build request payload: {}", e))
+                }))
+            }
+        };
 
         let req = self
             .base
@@ -108,4 +120,24 @@ impl ChatModelTrait for OpenAiChatModel {
             Ok(chat_response)
         }))
     }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OpenAIChatCompletionParameters {
+    pub model: String,
+    pub messages: Vec<OpenAIChatMessage>,
+    pub temperature: f32,
+    pub max_tokens: Option<u32>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum StopToken {
+    String(String),
+    Array(Vec<String>),
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OpenAIChatMessage {
+    pub role: Role,
+    pub content: String,
 }

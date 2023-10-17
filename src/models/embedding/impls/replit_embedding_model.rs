@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use serde_json::Value;
 
-use crate::error::ApiError;
 use crate::models::base::Model;
 use crate::models::embedding::embedding_model::EmbeddingModelTrait;
 use crate::models::embedding::structs::EmbeddingModelResponse;
@@ -13,7 +12,7 @@ pub struct ReplitEmbeddingModel {
 }
 
 impl ReplitEmbeddingModel {
-    pub fn new(model_name: &str, server_url: Option<&str>) -> Result<Self, ApiError> {
+    pub fn new(model_name: &str, server_url: Option<&str>) -> Result<Self, anyhow::Error> {
         let base = Model::new(server_url)?;
         let model_name = model_name.to_string();
         Ok(ReplitEmbeddingModel { base, model_name })
@@ -53,7 +52,7 @@ impl ReplitEmbeddingModel {
 
 #[async_trait::async_trait(?Send)]
 impl EmbeddingModelTrait for ReplitEmbeddingModel {
-    async fn embed(&self, content: Vec<String>) -> Result<EmbeddingModelResponse, ApiError> {
+    async fn embed(&self, content: Vec<String>) -> Result<EmbeddingModelResponse, anyhow::Error> {
         let payload = self.build_request_payload(&content, &HashMap::new());
 
         let req = self

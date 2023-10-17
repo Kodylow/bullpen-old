@@ -2,8 +2,6 @@ use std::pin::Pin;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{error::ApiError};
-
 #[derive(Debug, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct TokenCountMetadata {
@@ -20,4 +18,5 @@ pub struct Metadata {
     pub output_token_count: Option<TokenCountMetadata>,
 }
 
-pub type PinBoxStream<T> = Pin<Box<dyn futures_util::stream::Stream<Item = Result<T, ApiError>>>>;
+pub type PinBoxStream<T> =
+    Pin<Box<dyn futures_util::stream::Stream<Item = Result<T, anyhow::Error>>>>;

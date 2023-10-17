@@ -1,7 +1,6 @@
 use super::impls::replit_completion_model::ReplitCompletionModel;
 use super::structs::CompletionModelResponse;
 use super::CompletionModels;
-use crate::error::ApiError;
 use crate::models::base::structs::PinBoxStream;
 
 pub struct CompletionModel {
@@ -9,7 +8,10 @@ pub struct CompletionModel {
 }
 
 impl CompletionModel {
-    pub fn new(model_name: CompletionModels, server_url: Option<&str>) -> Result<Self, ApiError> {
+    pub fn new(
+        model_name: CompletionModels,
+        server_url: Option<&str>,
+    ) -> Result<Self, anyhow::Error> {
         match model_name {
             CompletionModels::TextBison => Ok(Self {
                 inner: Box::new(ReplitCompletionModel::new(model_name.as_str(), server_url)?),
@@ -25,7 +27,7 @@ pub trait CompletionModelTrait {
         prompts: Vec<String>,
         max_output_tokens: i32,
         temperature: f32,
-    ) -> Result<CompletionModelResponse, ApiError>;
+    ) -> Result<CompletionModelResponse, anyhow::Error>;
     async fn stream_complete(
         &self,
         prompts: Vec<String>,
@@ -41,7 +43,7 @@ impl CompletionModelTrait for CompletionModel {
         prompts: Vec<String>,
         max_output_tokens: i32,
         temperature: f32,
-    ) -> Result<CompletionModelResponse, ApiError> {
+    ) -> Result<CompletionModelResponse, anyhow::Error> {
         self.inner
             .complete(prompts, max_output_tokens, temperature)
             .await
