@@ -1,6 +1,6 @@
 use std::pin::Pin;
 
-use super::impls::{OpenAiChatModel, ReplitChatModel};
+use super::impls::{OpenAiChatModel, PerplexityChatModel, ReplitChatModel};
 use super::structs::{ChatModelResponse, ChatSession};
 use super::ChatModels;
 use crate::models::base::structs::PinBoxStream;
@@ -20,6 +20,18 @@ impl ChatModel {
             }),
             ChatModels::Gpt4 => Ok(Self {
                 inner: Box::new(OpenAiChatModel::new(model_name.as_str(), server_url)?),
+            }),
+            ChatModels::Llama2_70bChat => Ok(Self {
+                inner: Box::new(PerplexityChatModel::new(model_name.as_str(), server_url)?),
+            }),
+            ChatModels::Llama2_13bChat => Ok(Self {
+                inner: Box::new(PerplexityChatModel::new(model_name.as_str(), server_url)?),
+            }),
+            ChatModels::Codellama34bInstruct => Ok(Self {
+                inner: Box::new(PerplexityChatModel::new(model_name.as_str(), server_url)?),
+            }),
+            ChatModels::Mistral7bInstruct => Ok(Self {
+                inner: Box::new(PerplexityChatModel::new(model_name.as_str(), server_url)?),
             }),
         }
     }

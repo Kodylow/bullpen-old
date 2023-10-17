@@ -26,7 +26,7 @@ impl ChatModelTrait for ReplitChatModel {
         let req = self
             .base
             .client // Use the client from base
-            .post(&format!("{}/replit/v1beta/chat", &self.base.server_url))
+            .post(&format!("{}/v1beta/chat", &self.base.server_url))
             .json(&payload)
             .build()?;
 

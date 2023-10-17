@@ -6,16 +6,16 @@ use crate::models::base::Model;
 use crate::models::chat::chat_model::ChatModelTrait;
 use crate::models::chat::structs::{ChatModelResponse, ChatSession, Role};
 
-pub struct OpenAiChatModel {
+pub struct PerplexityChatModel {
     base: Model,
     model_name: String,
 }
 
-impl OpenAiChatModel {
+impl PerplexityChatModel {
     pub fn new(model_name: &str, server_url: Option<&str>) -> Result<Self, anyhow::Error> {
         let base = Model::new(server_url)?;
         let model_name = model_name.to_string();
-        Ok(OpenAiChatModel { base, model_name })
+        Ok(PerplexityChatModel { base, model_name })
     }
 
     pub fn build_request_payload(
@@ -23,30 +23,30 @@ impl OpenAiChatModel {
         prompts: &[ChatSession],
         max_output_tokens: i32,
         temperature: f32,
-    ) -> Result<OpenAIChatCompletionParameters, anyhow::Error> {
+    ) -> Result<PerplexityChatCompletionParameters, anyhow::Error> {
         let mut messages = vec![];
         for prompt in prompts {
-            // Convert ChatExample into OpenAIChatMessage
+            // Convert ChatExample into PerplexityChatMessage
             for example in &prompt.examples {
-                messages.push(OpenAIChatMessage {
+                messages.push(PerplexityChatMessage {
                     role: Role::User, // Input is always from User
                     content: example.input.content.clone(),
                 });
-                messages.push(OpenAIChatMessage {
+                messages.push(PerplexityChatMessage {
                     role: Role::Assistant, // Output is always from Assistant
                     content: example.output.content.clone(),
                 });
             }
-            // Convert ChatMessage into OpenAIChatMessage
+            // Convert ChatMessage into PerplexityChatMessage
             for message in &prompt.messages {
-                messages.push(OpenAIChatMessage {
+                messages.push(PerplexityChatMessage {
                     role: message.author.clone(),
                     content: message.content.clone(),
                 });
             }
         }
 
-        let parameters = OpenAIChatCompletionParameters {
+        let parameters = PerplexityChatCompletionParameters {
             model: self.model_name.clone(),
             messages,
             temperature,
@@ -58,7 +58,7 @@ impl OpenAiChatModel {
 }
 
 #[async_trait::async_trait(?Send)]
-impl ChatModelTrait for OpenAiChatModel {
+impl ChatModelTrait for PerplexityChatModel {
     async fn chat(
         &self,
         prompts: Vec<ChatSession>,
@@ -71,7 +71,7 @@ impl ChatModelTrait for OpenAiChatModel {
             .base
             .client // Use the client from base
             .post(&format!(
-                "{}/openai/v1/chat/completions",
+                "{}/Perplexity/v1/chat/completions",
                 &self.base.server_url
             ))
             .json(&payload)
@@ -108,7 +108,7 @@ impl ChatModelTrait for OpenAiChatModel {
             .base
             .client // Use the client from base
             .post(&format!(
-                "{}/openai/v1/chat/completions",
+                "{}/Perplexity/v1/chat/completions",
                 &self.base.server_url
             ))
             .json(&payload)
@@ -126,9 +126,9 @@ impl ChatModelTrait for OpenAiChatModel {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct OpenAIChatCompletionParameters {
+pub struct PerplexityChatCompletionParameters {
     pub model: String,
-    pub messages: Vec<OpenAIChatMessage>,
+    pub messages: Vec<PerplexityChatMessage>,
     pub temperature: f32,
     pub max_tokens: Option<u32>,
 }
@@ -140,7 +140,7 @@ pub enum StopToken {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct OpenAIChatMessage {
+pub struct PerplexityChatMessage {
     pub role: Role,
     pub content: String,
 }

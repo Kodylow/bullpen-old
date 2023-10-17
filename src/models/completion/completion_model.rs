@@ -1,3 +1,4 @@
+use super::impls::openai_completion_model::OpenAICompletionModel;
 use super::impls::replit_completion_model::ReplitCompletionModel;
 use super::structs::CompletionModelResponse;
 use super::CompletionModels;
@@ -15,6 +16,12 @@ impl CompletionModel {
         match model_name {
             CompletionModels::TextBison => Ok(Self {
                 inner: Box::new(ReplitCompletionModel::new(model_name.as_str(), server_url)?),
+            }),
+            CompletionModels::Gpt35Turbo => Ok(Self {
+                inner: Box::new(OpenAICompletionModel::new(model_name.as_str(), server_url)?),
+            }),
+            CompletionModels::Gpt4 => Ok(Self {
+                inner: Box::new(OpenAICompletionModel::new(model_name.as_str(), server_url)?),
             }),
         }
     }

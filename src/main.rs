@@ -1,13 +1,14 @@
 use std::error::Error;
 
-use bullpen::models::chat::chat_model::ChatModelTrait;
+
+use bullpen::models::chat::structs::Role;
 use bullpen::models::chat::ChatModels::ChatBison;
 use bullpen::models::chat::{ChatExample, ChatMessage, ChatModel, ChatSession};
 use bullpen::models::completion::completion_model::CompletionModelTrait;
 use bullpen::models::completion::CompletionModels::TextBison;
-use bullpen::models::embedding::embedding_model::EmbeddingModelTrait;
-use bullpen::models::embedding::EmbeddingModels::TextEmbeddingGecko;
-use bullpen::models::{CompletionModel, EmbeddingModel};
+
+
+use bullpen::models::{CompletionModel};
 use futures_util::StreamExt;
 use log::info;
 
@@ -19,24 +20,24 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     log::debug!("Debug logging is enabled");
     // -- Chat Model --
-    let chat_model = ChatModel::new(ChatBison, None)?;
-    let chat_session = ChatSession {
+    let _chat_model = ChatModel::new(ChatBison, None)?;
+    let _chat_session = ChatSession {
         context: "You are a programmer bot".to_string(),
         examples: vec![ChatExample {
             input: ChatMessage {
                 content: "1 + 1".to_string(),
-                author: "".to_string(),
+                author: Role::User,
             },
             output: ChatMessage {
                 content: "2".to_string(),
-                author: "".to_string(),
+                author: Role::Assistant,
             },
         }],
         messages: vec![ChatMessage {
             content: "How do I write a nix flake for a rust
     project?"
                 .to_string(),
-            author: "USER".to_string(),
+            author: Role::User,
         }],
     };
 

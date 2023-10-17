@@ -57,7 +57,7 @@ impl CompletionModelTrait for OpenAICompletionModel {
         let req = self
             .base
             .client
-            .post(&format!("{}/v1beta/completion", &self.base.server_url))
+            .post(&format!("{}/openai/v1/completion", &self.base.server_url))
             .json(&payload)
             .build()?;
 

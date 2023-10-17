@@ -1,4 +1,4 @@
-use log::info;
+
 use reqwest::header::{HeaderValue, CONTENT_TYPE};
 use url::Url;
 
